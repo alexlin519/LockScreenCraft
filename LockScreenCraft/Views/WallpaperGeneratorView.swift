@@ -13,9 +13,11 @@ struct WallpaperGeneratorView: View {
                     .padding()
                 
                 // Device Selection
-                Picker("Device", selection: $viewModel.selectedDevice) {
-                    Text(viewModel.selectedDevice.modelName)
-                        .tag(viewModel.selectedDevice)
+                  Picker("Device", selection: $viewModel.selectedDevice) {
+                    ForEach(viewModel.availableDevices, id: \.self) { device in
+                        Text(device.modelName)
+                            .tag(device) // Bind the device to the tag
+                    }
                 }
                 .pickerStyle(.menu)
                 .padding()

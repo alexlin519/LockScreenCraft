@@ -2,6 +2,18 @@ import SwiftUI
 
 @MainActor
 class WallpaperGeneratorViewModel: ObservableObject {
+
+    // Add AVAILABLE DEVICES list
+    let availableDevices: [DeviceConfig] = [
+        .iPhone12ProMax,
+        // Add other devices here
+        DeviceConfig(
+            modelName: "iPhone 15 Pro",
+            resolution: CGSize(width: 1179, height: 2556),
+            safeArea: UIEdgeInsets(top: 200, left: 0, bottom: 150, right: 0)
+        )
+    ]
+
     @Published var inputText: String = ""
     @Published var selectedDevice: DeviceConfig
     @Published var generatedImage: UIImage?
@@ -13,7 +25,9 @@ class WallpaperGeneratorViewModel: ObservableObject {
     private let photoService = PhotoService.shared
     
     init() {
-        self.selectedDevice = DeviceManager.shared.defaultDevice
+        //self.selectedDevice = DeviceManager.shared.defaultDevice
+        // Ensure default device exists in `availableDevices`
+        self.selectedDevice = DeviceConfig.iPhone12ProMax  // Replace with your own default
     }
     
     func generateWallpaper() {

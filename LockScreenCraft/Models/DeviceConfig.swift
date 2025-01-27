@@ -1,9 +1,30 @@
 import SwiftUI
 
-struct DeviceConfig {
+struct DeviceConfig: Hashable {
     let modelName: String
     let resolution: CGSize
     let safeArea: UIEdgeInsets
+    
+    // Implement Hashable conformance
+    static func == (lhs: DeviceConfig, rhs: DeviceConfig) -> Bool {
+        return lhs.modelName == rhs.modelName &&
+               lhs.resolution.width == rhs.resolution.width &&
+               lhs.resolution.height == rhs.resolution.height &&
+               lhs.safeArea.top == rhs.safeArea.top &&
+               lhs.safeArea.left == rhs.safeArea.left &&
+               lhs.safeArea.bottom == rhs.safeArea.bottom &&
+               lhs.safeArea.right == rhs.safeArea.right
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(modelName)
+        hasher.combine(resolution.width)
+        hasher.combine(resolution.height)
+        hasher.combine(safeArea.top)
+        hasher.combine(safeArea.left)
+        hasher.combine(safeArea.bottom)
+        hasher.combine(safeArea.right)
+    }
     
     static let iPhone12ProMax = DeviceConfig(
         modelName: "iPhone 12 Pro Max",
