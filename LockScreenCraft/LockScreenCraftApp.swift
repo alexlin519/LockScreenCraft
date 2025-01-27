@@ -11,7 +11,7 @@ import SwiftUI
 struct LockScreenCraftApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            WallpaperGeneratorView()
         }
     }
 }
