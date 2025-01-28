@@ -7,11 +7,20 @@ struct WallpaperGeneratorView: View {
         NavigationView {
             VStack(spacing: 20) {
                 // Text Input
-                TextField("Enter your text (max 200 characters)", text: $viewModel.inputText, axis: .vertical)
+                TextField("输入文字(最多200字)", text: $viewModel.inputText, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
-                    .lineLimit(5)
+                    .onSubmit { /* Empty to capture return key */ }  
+                    .lineLimit(5...) //  Changed to dynamic line limit using ...
+                    .textInputAutocapitalization(.none) 
+                    .autocorrectionDisabled() 
+                    .textContentType(.none) // Added for Chinese input
+                    .submitLabel(.return) // Added return key type
                     .padding()
-                
+
+                 Text("Tip: Use \\ or // or \\\\ to create line breaks in image")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal)
                 // Device Selection
                 Picker("Device", selection: $viewModel.selectedDevice) {
                     ForEach(viewModel.availableDevices, id: \.self) { device in
@@ -42,7 +51,6 @@ struct WallpaperGeneratorView: View {
                         Label("Generate", systemImage: "wand.and.stars")
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(viewModel.inputText.isEmpty)
                     
                     if viewModel.generatedImage != nil {
                         Button(action: {
@@ -78,3 +86,4 @@ struct WallpaperGeneratorView: View {
 #Preview {
     WallpaperGeneratorView()
 } 
+
