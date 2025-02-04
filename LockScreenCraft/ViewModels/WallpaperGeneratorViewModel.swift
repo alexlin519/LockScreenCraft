@@ -31,12 +31,16 @@ class WallpaperGeneratorViewModel: ObservableObject {
     }
     
     func generateWallpaper() {
-        guard !inputText.isEmpty else {
-            showError(message: "Please enter some text")
-            return
-        }
+        // Use default text when input is empty
+        let finalText = inputText.isEmpty ? "test test \\ 在黑洞边缘坍塌，//我喝多了火焰，又发誓与神为敌。" : inputText
         
-        guard inputText.count <= 200 else {
+        // Process text with line breaks
+        let processedText = finalText  // Changed from inputText to finalText
+            .replacingOccurrences(of: "\\\\", with: "\n")  // Handle escaped backslashes
+            .replacingOccurrences(of: "\\", with: "\n")     // Replace single backslashes
+            .replacingOccurrences(of: "//", with: "\n")
+            
+        guard processedText.count <= 200 else {
             showError(message: "Text must be 200 characters or less")
             return
         }
@@ -47,7 +51,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
         let font = UIFont.systemFont(ofSize: 17)
         
         generatedImage = textRenderer.renderText(
-            inputText,
+            processedText, 
             font: font,
             color: .black,
             device: selectedDevice
