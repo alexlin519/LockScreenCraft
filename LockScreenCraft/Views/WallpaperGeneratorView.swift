@@ -175,7 +175,7 @@ struct PreviewSection: View {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: geometry.size.width * 0.6)
+                        .frame(width: geometry.size.width)
                         .frame(maxHeight: 400)
                         .cornerRadius(20)
                         .shadow(radius: 5)
@@ -254,22 +254,44 @@ struct FullScreenPreview: View {
     @Binding var isPresented: Bool
     
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.7)
-                .ignoresSafeArea()
-            
-            if let image = image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .overlay(DeviceFrameOverlay(device: device))
+        GeometryReader { geometry in
+            ZStack {
+                Color.black.opacity(0.7)
+                    .ignoresSafeArea()
+                
+                if let image = image {
+                    // Calculate scale factor to match device resolution
+                    let screenScale = UIScreen.main.scale
+                    let deviceWidth = device.resolution.width / screenScale
+                    let deviceHeight = device.resolution.height / screenScale
+                    let screenWidth = geometry.size.width
+                    let screenHeight = geometry.size.height
+                    
+                    // Calculate scaling to fit screen while maintaining aspect ratio
+                    let widthRatio = screenWidth / deviceWidth
+                    let heightRatio = screenHeight / deviceHeight
+                    let scale = min(widthRatio, heightRatio)
+                    
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(
+                            width: deviceWidth * scale,
+                            height: deviceHeight * scale
+                        )
+                        .overlay(
+                            DeviceFrameOverlay(device: device)
+                                .opacity(0.3)
+                        )
+                }
+            }
+            .onTapGesture {
+                withAnimation(.linear(duration: 0.25)) {
+                    isPresented = false
+                }
             }
         }
-        .onTapGesture {
-            withAnimation(.linear(duration: 0.25)) {
-                isPresented = false
-            }
-        }
+        .ignoresSafeArea()
     }
 }
 
@@ -299,8 +321,20 @@ struct DeviceFrameOverlay: View {
     }
 }
 
+
 #Preview {
     WallpaperGeneratorView()
-} 
-
+        //.device(.iPhone12ProMax)
+}
+// #if DEBUG
+// struct WallpaperGeneratorView_Previews: PreviewProvider {
+//     static var previews: some View {
+//         WallpaperGeneratorView()
+//             .previewDevice(PreviewDevice(rawValue: "iPhone 12 Pro Max"))
+//             .previewDisplayName("iPhone 12 Pro Max")
+//             .previewLayout(.device)
+//             .previewInterfaceOrientation(.portrait)
+//     }
+// }
+// #endif
 
