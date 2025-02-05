@@ -1,9 +1,10 @@
 import SwiftUI
+import UIKit
 
 @MainActor
 class WallpaperGeneratorViewModel: ObservableObject {
 
-    // Add AVAILABLE DEVICES list
+    // MARK: - Device Configuration
     let availableDevices: [DeviceConfig] = [
         .iPhone12ProMax,
         // Add other devices here
@@ -14,6 +15,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
         )
     ]
 
+    // MARK: - Published Properties
     @Published var inputText: String = ""
     @Published var selectedDevice: DeviceConfig
     @Published var generatedImage: UIImage?
@@ -21,6 +23,22 @@ class WallpaperGeneratorViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var showError = false
     
+    // MARK: - Text Styling Properties
+    @Published var fontSize: Double = 90.0
+    @Published var textAlignment: NSTextAlignment = .center
+    @Published var selectedFontCategory: FontCategory = .system
+    @Published var selectedFont: String = "System"
+    @Published var isLoadingFonts: Bool = false
+    
+    // MARK: - Font Management
+    enum FontCategory: String, CaseIterable {
+        case system = "System"
+        case chinese = "Chinese"
+        case english = "English"
+        case handwriting = "Handwriting"
+    }
+    
+    private var fontDebounceTimer: Timer?
     private let textRenderer = TextRenderer.shared
     private let photoService = PhotoService.shared
     
@@ -28,6 +46,66 @@ class WallpaperGeneratorViewModel: ObservableObject {
         //self.selectedDevice = DeviceManager.shared.defaultDevice
         // Ensure default device exists in `availableDevices`
         self.selectedDevice = DeviceConfig.iPhone12ProMax  // Replace with your own default
+    }
+    
+    // MARK: - Font Size Methods
+    func increaseFontSize() {
+        if fontSize < 200.0 {
+            fontSize += 0.1
+            updateWallpaperWithDebounce()
+        }
+    }
+    
+    func decreaseFontSize() {
+        if fontSize > 3.0 {
+            fontSize -= 0.1
+            updateWallpaperWithDebounce()
+        }
+    }
+    
+    func setFontSize(_ size: Double) {
+        fontSize = min(max(size, 3.0), 200.0)
+        updateWallpaperWithDebounce()
+    }
+    
+    // MARK: - Text Alignment Methods
+    func setTextAlignment(_ alignment: NSTextAlignment) {
+        textAlignment = alignment
+        updateWallpaperWithDebounce()
+    }
+    
+    // MARK: - Font Selection Methods
+    func setFontCategory(_ category: FontCategory) {
+        selectedFontCategory = category
+        // Reset to default font for the category
+        selectedFont = getFontsForCategory(category).first ?? "System"
+        updateWallpaperWithDebounce()
+    }
+    
+    func setFont(_ fontName: String) {
+        selectedFont = fontName
+        updateWallpaperWithDebounce()
+    }
+    
+    func getFontsForCategory(_ category: FontCategory) -> [String] {
+        switch category {
+        case .system:
+            return ["System"]
+        case .chinese:
+            return ["LXGW WenKai", "Source Han Sans CN"]
+        case .english:
+            return ["SF Pro", "SF Mono", "New York"]
+        case .handwriting:
+            return ["SF Pro Rounded", "Comic Sans MS"]
+        }
+    }
+    
+    // MARK: - Wallpaper Generation
+    private func updateWallpaperWithDebounce() {
+        fontDebounceTimer?.invalidate()
+        fontDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            self?.generateWallpaper()
+        }
     }
     
     func generateWallpaper() {
@@ -47,14 +125,14 @@ class WallpaperGeneratorViewModel: ObservableObject {
         
         isGenerating = true
         
-        // Use system font for now, can be customizable later
-        let font = UIFont.systemFont(ofSize: 17)
+        let font = UIFont(name: selectedFont, size: CGFloat(fontSize)) ?? .systemFont(ofSize: CGFloat(fontSize))
         
         generatedImage = textRenderer.renderText(
-            processedText, 
+            processedText,
             font: font,
             color: .black,
-            device: selectedDevice
+            device: selectedDevice,
+            alignment: textAlignment
         )
         
         isGenerating = false

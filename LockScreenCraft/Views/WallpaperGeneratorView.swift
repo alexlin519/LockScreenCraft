@@ -28,17 +28,21 @@ struct PreviewTabView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                PreviewSection(
-                    viewModel: viewModel,
-                    isFullScreenPreview: $isFullScreenPreview,
-                    thumbnailScale: $thumbnailScale
-                )
-                
-                FutureSettingsSection()
-                
-                if viewModel.generatedImage != nil {
-                    SaveButton(viewModel: viewModel)
+            ScrollView {
+                VStack(spacing: 20) {
+                    PreviewSection(
+                        viewModel: viewModel,
+                        isFullScreenPreview: $isFullScreenPreview,
+                        thumbnailScale: $thumbnailScale
+                    )
+                    
+                    // Show text controls regardless of image presence
+                    TextControlPanel(viewModel: viewModel)
+                        .padding(.horizontal)
+                    
+                    if viewModel.generatedImage != nil {
+                        SaveButton(viewModel: viewModel)
+                    }
                 }
             }
             .navigationTitle("Preview")
@@ -321,20 +325,138 @@ struct DeviceFrameOverlay: View {
     }
 }
 
+// MARK: - Text Control Panel
+private struct TextControlPanel: View {
+    @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    @State private var isShowingFontInfo = false
+    @State private var editingFontSize: String = ""
+    
+    var body: some View {
+        GroupBox {
+            VStack(spacing: 16) {
+                // Font Size Controls
+                HStack {
+                    Text("Font Size")
+                        .font(.headline)
+                    
+                    Spacer()
+                    
+                    Button(action: { viewModel.decreaseFontSize() }) {
+                        Image(systemName: "minus.circle.fill")
+                    }
+                    .buttonStyle(.borderless)
+                    
+                    TextField("Size", text: Binding(
+                        get: { String(format: "%.1f", viewModel.fontSize) },
+                        set: { newValue in
+                            if let size = Double(newValue) {
+                                viewModel.setFontSize(size)
+                            }
+                        }
+                    ))
+                    .frame(width: 60)
+                    .multilineTextAlignment(.center)
+                    .textFieldStyle(.roundedBorder)
+                    
+                    Button(action: { viewModel.increaseFontSize() }) {
+                        Image(systemName: "plus.circle.fill")
+                    }
+                    .buttonStyle(.borderless)
+                    
+                    Text("pt")
+                        .foregroundColor(.secondary)
+                }
+                
+                Divider()
+                
+                // Text Alignment Controls
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Alignment")
+                        .font(.headline)
+                    
+                    HStack(spacing: 12) {
+                        ForEach([NSTextAlignment.left, .center, .right, .justified], id: \.self) { alignment in
+                            Button(action: { viewModel.setTextAlignment(alignment) }) {
+                                Image(systemName: alignmentIcon(for: alignment))
+                                    .frame(width: 44, height: 44)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(viewModel.textAlignment == alignment ? .purple : .gray)
+                        }
+                    }
+                }
+                
+                Divider()
+                
+                // Font Selection Controls
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Font")
+                            .font(.headline)
+                        
+                        Spacer()
+                        
+                        if viewModel.isLoadingFonts {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        }
+                    }
+                    
+                    HStack {
+                        // Category Picker
+                        Picker("Category", selection: $viewModel.selectedFontCategory) {
+                            ForEach(WallpaperGeneratorViewModel.FontCategory.allCases, id: \.self) { category in
+                                Text(category.rawValue)
+                                    .tag(category)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        
+                        Spacer()
+                        
+                        // Font Picker
+                        Picker("Font", selection: $viewModel.selectedFont) {
+                            ForEach(viewModel.getFontsForCategory(viewModel.selectedFontCategory), id: \.self) { font in
+                                HStack {
+                                    Text(font)
+                                    Button(action: { isShowingFontInfo = true }) {
+                                        Image(systemName: "info.circle")
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .tag(font)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
+                }
+            }
+            .padding(12)
+        }
+        .alert("Font Information", isPresented: $isShowingFontInfo) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Font: \(viewModel.selectedFont)\nCopyright information will be displayed here.")
+        }
+    }
+    
+    private func alignmentIcon(for alignment: NSTextAlignment) -> String {
+        switch alignment {
+        case .left:
+            return "text.alignleft"
+        case .center:
+            return "text.aligncenter"
+        case .right:
+            return "text.alignright"
+        case .justified:
+            return "text.justify"
+        default:
+            return "text.aligncenter"
+        }
+    }
+}
 
 #Preview {
     WallpaperGeneratorView()
-        //.device(.iPhone12ProMax)
 }
-// #if DEBUG
-// struct WallpaperGeneratorView_Previews: PreviewProvider {
-//     static var previews: some View {
-//         WallpaperGeneratorView()
-//             .previewDevice(PreviewDevice(rawValue: "iPhone 12 Pro Max"))
-//             .previewDisplayName("iPhone 12 Pro Max")
-//             .previewLayout(.device)
-//             .previewInterfaceOrientation(.portrait)
-//     }
-// }
-// #endif
 
