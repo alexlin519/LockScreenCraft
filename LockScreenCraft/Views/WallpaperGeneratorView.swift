@@ -148,8 +148,10 @@ struct ActionButtonsSection: View {
     var body: some View {
         VStack(spacing: 16) {
             Button(action: {
-                viewModel.generateWallpaper()
-                selectedTab = 1
+                Task {
+                    await viewModel.generateWallpaper()
+                    selectedTab = 1
+                }
             }) {
                 Label("Generate Wallpaper", systemImage: "wand.and.stars")
                     .frame(maxWidth: .infinity)
@@ -327,128 +329,65 @@ struct DeviceFrameOverlay: View {
 }
 
 // MARK: - Text Control Panel
-private struct TextControlPanel: View {
+struct TextControlPanel: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
-    @State private var isShowingFontInfo = false
-    @State private var editingFontSize: String = ""
     
     var body: some View {
-        GroupBox {
-            VStack(spacing: 8) {
-                // Font Size Controls
-                HStack {
-                    Text("Font Size")
-                        .font(.headline)
-                        .frame(width: 80, alignment: .leading)
-                    
-                    Spacer()
-                    
-                    Button(action: { viewModel.decreaseFontSize() }) {
-                        Image(systemName: "minus.circle.fill")
-                    }
-                    .buttonStyle(.borderless)
-                    
-                    TextField("Size", text: Binding(
-                        get: { String(format: "%.0f", viewModel.fontSize) },
-                        set: { newValue in
-                            if let size = Double(newValue) {
-                                viewModel.setFontSize(size)
-                            }
-                        }
-                    ))
-                    .frame(width: 50)
-                    .multilineTextAlignment(.center)
-                    .textFieldStyle(.roundedBorder)
-                    
-                    Button(action: { viewModel.increaseFontSize() }) {
-                        Image(systemName: "plus.circle.fill")
-                    }
-                    .buttonStyle(.borderless)
-                    
-                    Text("pt")
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                
-                Divider()
-                
-                // Text Alignment Controls
-                HStack {
-                    Text("Alignment")
-                        .font(.headline)
-                        .frame(width: 80, alignment: .leading)
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 8) {
-                        ForEach([NSTextAlignment.left, .center, .right, .justified], id: \.self) { alignment in
-                            Button(action: { viewModel.setTextAlignment(alignment) }) {
-                                Image(systemName: alignmentIcon(for: alignment))
-                                    .frame(width: 32, height: 32)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(viewModel.textAlignment == alignment ? .purple : .gray)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                
-                Divider()
-                
-                // Font Selection Controls
-                HStack {
-                    Text("Font")
-                        .font(.headline)
-                        .frame(width: 80, alignment: .leading)
-                    
-                    Spacer()
-                    
-                    if viewModel.isLoadingFonts {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    }
-                    
-                    // Category Picker
-                    Picker("Category", selection: $viewModel.selectedFontCategory) {
-                        ForEach(WallpaperGeneratorViewModel.FontCategory.allCases, id: \.self) { category in
-                            Text(category.rawValue)
-                                .tag(category)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    
-                    // Font Picker
-                    Picker("Font", selection: $viewModel.selectedFont) {
-                        ForEach(viewModel.getFontsForCategory(viewModel.selectedFontCategory), id: \.self) { font in
-                            Text(font)
-                                .tag(font)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-                .frame(maxWidth: .infinity)
+        VStack(spacing: 16) {
+            // Font Category Picker
+            Picker("Font Category", selection: $viewModel.selectedFontCategory) {
+                Text("System").tag(FontCategory.system)
+                Text("Chinese").tag(FontCategory.chinese)
+                Text("English").tag(FontCategory.english)
+                Text("Handwriting").tag(FontCategory.handwriting)
             }
-            .padding(8)
-        }
-        .alert("Font Information", isPresented: $isShowingFontInfo) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("Font: \(viewModel.selectedFont)\nCopyright information will be displayed here.")
+            .pickerStyle(.segmented)
+            
+            // Font Picker
+            if !viewModel.availableFonts.isEmpty {
+                Picker("Font", selection: $viewModel.selectedFont) {
+                    ForEach(viewModel.availableFonts, id: \.self) { font in
+                        Text(font).tag(font)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+            
+            // Font Size Controls
+            HStack {
+                Button(action: { viewModel.decreaseFontSize() }) {
+                    Image(systemName: "minus.circle")
+                }
+                
+                Slider(
+                    value: $viewModel.fontSize,
+                    in: 3...200,
+                    step: 1
+                )
+                
+                Button(action: { viewModel.increaseFontSize() }) {
+                    Image(systemName: "plus.circle")
+                }
+            }
+            
+            // Text Alignment Controls
+            HStack {
+                ForEach([NSTextAlignment.left, .center, .right], id: \.self) { alignment in
+                    Button(action: { viewModel.setTextAlignment(alignment) }) {
+                        Image(systemName: alignmentIcon(for: alignment))
+                            .foregroundColor(viewModel.textAlignment == alignment ? .accentColor : .primary)
+                    }
+                }
+            }
         }
     }
     
     private func alignmentIcon(for alignment: NSTextAlignment) -> String {
         switch alignment {
-        case .left:
-            return "text.alignleft"
-        case .center:
-            return "text.aligncenter"
-        case .right:
-            return "text.alignright"
-        case .justified:
-            return "text.justify"
-        default:
-            return "text.aligncenter"
+        case .left: return "text.alignleft"
+        case .center: return "text.aligncenter"
+        case .right: return "text.alignright"
+        default: return "text.alignleft"
         }
     }
 }

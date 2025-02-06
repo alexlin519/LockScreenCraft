@@ -26,26 +26,54 @@ class WallpaperGeneratorViewModel: ObservableObject {
     // MARK: - Text Styling Properties
     @Published var fontSize: Double = 90.0
     @Published var textAlignment: NSTextAlignment = .center
-    @Published var selectedFontCategory: FontCategory = .system
-    @Published var selectedFont: String = "System"
     @Published var isLoadingFonts: Bool = false
     
     // MARK: - Font Management
-    enum FontCategory: String, CaseIterable {
-        case system = "System"
-        case chinese = "Chinese"
-        case english = "English"
-        case handwriting = "Handwriting"
-    }
-    
     private var fontDebounceTimer: Timer?
     private let textRenderer = TextRenderer.shared
     private let photoService = PhotoService.shared
+    private let fontManager = FontManager.shared
+    
+    // MARK: - Published Properties for Fonts
+    @Published var availableFonts: [String] = []
+    @Published var selectedFontCategory: FontCategory = .system {
+        didSet {
+            updateAvailableFonts()
+        }
+    }
+    @Published var selectedFont: String = "System" {
+        didSet {
+            print("📝 Font selected: \(selectedFont)")
+            updateWallpaperWithDebounce()
+        }
+    }
     
     init() {
-        //self.selectedDevice = DeviceManager.shared.defaultDevice
-        // Ensure default device exists in `availableDevices`
-        self.selectedDevice = DeviceConfig.iPhone12ProMax  // Replace with your own default
+        self.selectedDevice = DeviceConfig.iPhone12ProMax
+        // Initialize fonts
+        print("🚀 Initializing WallpaperGeneratorViewModel")
+        fontManager.registerFonts()
+        updateAvailableFonts()
+    }
+    
+    private func updateAvailableFonts() {
+        print("🔄 Updating available fonts for category: \(selectedFontCategory.displayName)")
+        isLoadingFonts = true
+        
+        // Get fonts for the current category
+        let fonts = fontManager.getFontsForCategory(selectedFontCategory)
+        print("📚 Found \(fonts.count) fonts for category \(selectedFontCategory.displayName): \(fonts)")
+        
+        // Update available fonts
+        availableFonts = fonts
+        
+        // Update selected font if necessary
+        if !fonts.contains(selectedFont) {
+            selectedFont = fonts.first ?? "System"
+            print("⚠️ Previous font not available in new category, switched to: \(selectedFont)")
+        }
+        
+        isLoadingFonts = false
     }
     
     // MARK: - Font Size Methods
@@ -76,27 +104,17 @@ class WallpaperGeneratorViewModel: ObservableObject {
     
     // MARK: - Font Selection Methods
     func setFontCategory(_ category: FontCategory) {
+        print("🔤 Setting font category to: \(category.displayName)")
         selectedFontCategory = category
-        // Reset to default font for the category
-        selectedFont = getFontsForCategory(category).first ?? "System"
-        updateWallpaperWithDebounce()
     }
     
     func setFont(_ fontName: String) {
-        selectedFont = fontName
-        updateWallpaperWithDebounce()
-    }
-    
-    func getFontsForCategory(_ category: FontCategory) -> [String] {
-        switch category {
-        case .system:
-            return ["System"]
-        case .chinese:
-            return ["LXGW WenKai", "Source Han Sans CN"]
-        case .english:
-            return ["SF Pro", "SF Mono", "New York"]
-        case .handwriting:
-            return ["SF Pro Rounded", "Comic Sans MS"]
+        print("✏️ Setting font to: \(fontName)")
+        if availableFonts.contains(fontName) {
+            selectedFont = fontName
+        } else {
+            print("⚠️ Attempted to set unavailable font: \(fontName)")
+            selectedFont = availableFonts.first ?? "System"
         }
     }
     
@@ -104,18 +122,21 @@ class WallpaperGeneratorViewModel: ObservableObject {
     private func updateWallpaperWithDebounce() {
         fontDebounceTimer?.invalidate()
         fontDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
-            self?.generateWallpaper()
+            Task { @MainActor [weak self] in
+                await self?.generateWallpaper()
+            }
         }
     }
     
-    func generateWallpaper() {
+    func generateWallpaper() async {
+        print("🎨 Starting wallpaper generation")
         // Use default text when input is empty
         let finalText = inputText.isEmpty ? "test test \\ 在黑洞边缘坍塌，//我喝多了火焰，又发誓与神为敌。" : inputText
         
         // Process text with line breaks
-        let processedText = finalText  // Changed from inputText to finalText
-            .replacingOccurrences(of: "\\\\", with: "\n")  // Handle escaped backslashes
-            .replacingOccurrences(of: "\\", with: "\n")     // Replace single backslashes
+        let processedText = finalText
+            .replacingOccurrences(of: "\\\\", with: "\n")
+            .replacingOccurrences(of: "\\", with: "\n")
             .replacingOccurrences(of: "//", with: "\n")
             
         guard processedText.count <= 200 else {
@@ -124,8 +145,10 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
         
         isGenerating = true
+        print("🔤 Using font: \(selectedFont) with size: \(fontSize)")
         
-        let font = UIFont(name: selectedFont, size: CGFloat(fontSize)) ?? .systemFont(ofSize: CGFloat(fontSize))
+        // Use FontManager to get the correct font
+        let font = fontManager.getFont(name: selectedFont, size: CGFloat(fontSize))
         
         generatedImage = textRenderer.renderText(
             processedText,
@@ -134,6 +157,13 @@ class WallpaperGeneratorViewModel: ObservableObject {
             device: selectedDevice,
             alignment: textAlignment
         )
+        
+        if generatedImage == nil {
+            print("⚠️ Failed to generate image")
+            showError(message: "Failed to generate wallpaper")
+        } else {
+            print("✅ Successfully generated wallpaper")
+        }
         
         isGenerating = false
     }

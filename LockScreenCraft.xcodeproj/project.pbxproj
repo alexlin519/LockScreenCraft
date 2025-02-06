@@ -29,9 +29,22 @@
 		19BA33752D44E7F200AA7E62 /* LockScreenCraftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LockScreenCraftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		19F58F022D54A14C006C2C1F /* Exceptions for "LockScreenCraft" folder in "LockScreenCraft" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 19BA33592D44E7EF00AA7E62 /* LockScreenCraft */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		19BA335C2D44E7EF00AA7E62 /* LockScreenCraft */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				19F58F022D54A14C006C2C1F /* Exceptions for "LockScreenCraft" folder in "LockScreenCraft" target */,
+			);
 			path = LockScreenCraft;
 			sourceTree = "<group>";
 		};
