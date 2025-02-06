@@ -28,22 +28,23 @@ struct PreviewTabView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    PreviewSection(
-                        viewModel: viewModel,
-                        isFullScreenPreview: $isFullScreenPreview,
-                        thumbnailScale: $thumbnailScale
-                    )
-                    
-                    // Show text controls regardless of image presence
-                    TextControlPanel(viewModel: viewModel)
-                        .padding(.horizontal)
-                    
-                    if viewModel.generatedImage != nil {
-                        SaveButton(viewModel: viewModel)
-                    }
+            VStack(spacing: 16) {
+                PreviewSection(
+                    viewModel: viewModel,
+                    isFullScreenPreview: $isFullScreenPreview,
+                    thumbnailScale: $thumbnailScale
+                )
+                .frame(maxHeight: UIScreen.main.bounds.height * 0.5)
+                
+                // Show text controls regardless of image presence
+                TextControlPanel(viewModel: viewModel)
+                    .padding(.horizontal)
+                
+                if viewModel.generatedImage != nil {
+                    SaveButton(viewModel: viewModel)
                 }
+                
+                Spacer(minLength: 0)
             }
             .navigationTitle("Preview")
             .fullScreenCover(isPresented: $isFullScreenPreview) {
@@ -333,11 +334,12 @@ private struct TextControlPanel: View {
     
     var body: some View {
         GroupBox {
-            VStack(spacing: 16) {
+            VStack(spacing: 8) {
                 // Font Size Controls
                 HStack {
                     Text("Font Size")
                         .font(.headline)
+                        .frame(width: 80, alignment: .leading)
                     
                     Spacer()
                     
@@ -347,14 +349,14 @@ private struct TextControlPanel: View {
                     .buttonStyle(.borderless)
                     
                     TextField("Size", text: Binding(
-                        get: { String(format: "%.1f", viewModel.fontSize) },
+                        get: { String(format: "%.0f", viewModel.fontSize) },
                         set: { newValue in
                             if let size = Double(newValue) {
                                 viewModel.setFontSize(size)
                             }
                         }
                     ))
-                    .frame(width: 60)
+                    .frame(width: 50)
                     .multilineTextAlignment(.center)
                     .textFieldStyle(.roundedBorder)
                     
@@ -366,72 +368,67 @@ private struct TextControlPanel: View {
                     Text("pt")
                         .foregroundColor(.secondary)
                 }
+                .frame(maxWidth: .infinity)
                 
                 Divider()
                 
                 // Text Alignment Controls
-                VStack(alignment: .leading, spacing: 8) {
+                HStack {
                     Text("Alignment")
                         .font(.headline)
+                        .frame(width: 80, alignment: .leading)
                     
-                    HStack(spacing: 12) {
+                    Spacer()
+                    
+                    HStack(spacing: 8) {
                         ForEach([NSTextAlignment.left, .center, .right, .justified], id: \.self) { alignment in
                             Button(action: { viewModel.setTextAlignment(alignment) }) {
                                 Image(systemName: alignmentIcon(for: alignment))
-                                    .frame(width: 44, height: 44)
+                                    .frame(width: 32, height: 32)
                             }
                             .buttonStyle(.bordered)
                             .tint(viewModel.textAlignment == alignment ? .purple : .gray)
                         }
                     }
                 }
+                .frame(maxWidth: .infinity)
                 
                 Divider()
                 
                 // Font Selection Controls
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Font")
-                            .font(.headline)
-                        
-                        Spacer()
-                        
-                        if viewModel.isLoadingFonts {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        }
+                HStack {
+                    Text("Font")
+                        .font(.headline)
+                        .frame(width: 80, alignment: .leading)
+                    
+                    Spacer()
+                    
+                    if viewModel.isLoadingFonts {
+                        ProgressView()
+                            .scaleEffect(0.8)
                     }
                     
-                    HStack {
-                        // Category Picker
-                        Picker("Category", selection: $viewModel.selectedFontCategory) {
-                            ForEach(WallpaperGeneratorViewModel.FontCategory.allCases, id: \.self) { category in
-                                Text(category.rawValue)
-                                    .tag(category)
-                            }
+                    // Category Picker
+                    Picker("Category", selection: $viewModel.selectedFontCategory) {
+                        ForEach(WallpaperGeneratorViewModel.FontCategory.allCases, id: \.self) { category in
+                            Text(category.rawValue)
+                                .tag(category)
                         }
-                        .pickerStyle(.menu)
-                        
-                        Spacer()
-                        
-                        // Font Picker
-                        Picker("Font", selection: $viewModel.selectedFont) {
-                            ForEach(viewModel.getFontsForCategory(viewModel.selectedFontCategory), id: \.self) { font in
-                                HStack {
-                                    Text(font)
-                                    Button(action: { isShowingFontInfo = true }) {
-                                        Image(systemName: "info.circle")
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                .tag(font)
-                            }
-                        }
-                        .pickerStyle(.menu)
                     }
+                    .pickerStyle(.menu)
+                    
+                    // Font Picker
+                    Picker("Font", selection: $viewModel.selectedFont) {
+                        ForEach(viewModel.getFontsForCategory(viewModel.selectedFontCategory), id: \.self) { font in
+                            Text(font)
+                                .tag(font)
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
+                .frame(maxWidth: .infinity)
             }
-            .padding(12)
+            .padding(8)
         }
         .alert("Font Information", isPresented: $isShowingFontInfo) {
             Button("OK", role: .cancel) {}

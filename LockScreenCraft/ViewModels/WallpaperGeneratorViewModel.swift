@@ -51,20 +51,20 @@ class WallpaperGeneratorViewModel: ObservableObject {
     // MARK: - Font Size Methods
     func increaseFontSize() {
         if fontSize < 200.0 {
-            fontSize += 0.1
+            fontSize += 1.0
             updateWallpaperWithDebounce()
         }
     }
     
     func decreaseFontSize() {
         if fontSize > 3.0 {
-            fontSize -= 0.1
+            fontSize -= 1.0
             updateWallpaperWithDebounce()
         }
     }
     
     func setFontSize(_ size: Double) {
-        fontSize = min(max(size, 3.0), 200.0)
+        fontSize = min(max(size.rounded(), 3.0), 200.0)
         updateWallpaperWithDebounce()
     }
     
