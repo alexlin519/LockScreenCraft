@@ -52,9 +52,16 @@ class FontManager {
         case .system:
             return ["System Font", "SF Pro", "SF Mono"]
         case .chinese:
-            return UIFont.familyNames.filter { 
-                $0.contains("宋体") || $0.contains("黑体") || $0.contains("楷体")
-            }
+            var chineseFonts = ["LXGW WenKai", "Source Han Sans CN"]
+            // Add any registered Chinese fonts
+            chineseFonts.append(contentsOf: registeredFonts.filter { 
+                let name = $0.lowercased()
+                return name.contains("wenkai") || 
+                       name.contains("han") || 
+                       name.contains("source") ||
+                       name.contains("lxgw")
+            })
+            return Array(Set(chineseFonts)) // Remove duplicates
         case .english:
             return ["Helvetica Neue", "Times New Roman", "Arial"]
         case .handwriting:
