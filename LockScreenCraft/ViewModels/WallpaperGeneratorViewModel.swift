@@ -1,5 +1,13 @@
 import SwiftUI
+import Foundation
+
+#if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
+
+// Remove the @_exported imports since we're in the same module
 
 @MainActor
 class WallpaperGeneratorViewModel: ObservableObject {
@@ -18,7 +26,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var inputText: String = ""
     @Published var selectedDevice: DeviceConfig
-    @Published var generatedImage: UIImage?
+    @Published var generatedImage: PlatformImage?
     @Published var isGenerating = false
     @Published var errorMessage: String?
     @Published var showError = false
@@ -35,21 +43,19 @@ class WallpaperGeneratorViewModel: ObservableObject {
     private let fontManager = FontManager.shared
     
     // MARK: - Published Properties for Fonts
-    @Published var availableFonts: [String] = []
-    @Published var selectedFontCategory: FontCategory = .system {
+    @Published var availableFonts: [FontDisplayInfo] = []
+    @Published var selectedFont: FontDisplayInfo {
         didSet {
-            updateAvailableFonts()
-        }
-    }
-    @Published var selectedFont: String = "System" {
-        didSet {
-            print("📝 Font selected: \(selectedFont)")
+            print("📝 Font selected: \(selectedFont.fontName) (\(selectedFont.displayName))")
             updateWallpaperWithDebounce()
         }
     }
     
     init() {
         self.selectedDevice = DeviceConfig.iPhone12ProMax
+        // Initialize with system font
+        self.selectedFont = FontDisplayInfo(fontName: "System Font", displayName: "系统字体")
+        
         // Initialize fonts
         print("🚀 Initializing WallpaperGeneratorViewModel")
         fontManager.registerFonts()
@@ -57,21 +63,12 @@ class WallpaperGeneratorViewModel: ObservableObject {
     }
     
     private func updateAvailableFonts() {
-        print("🔄 Updating available fonts for category: \(selectedFontCategory.displayName)")
+        print("🔄 Updating available fonts")
         isLoadingFonts = true
         
-        // Get fonts for the current category
-        let fonts = fontManager.getFontsForCategory(selectedFontCategory)
-        print("📚 Found \(fonts.count) fonts for category \(selectedFontCategory.displayName): \(fonts)")
-        
-        // Update available fonts
-        availableFonts = fonts
-        
-        // Update selected font if necessary
-        if !fonts.contains(selectedFont) {
-            selectedFont = fonts.first ?? "System"
-            print("⚠️ Previous font not available in new category, switched to: \(selectedFont)")
-        }
+        // Get all fonts
+        availableFonts = fontManager.getAllAvailableFonts()
+        print("📚 Found \(availableFonts.count) fonts")
         
         isLoadingFonts = false
     }
@@ -103,19 +100,9 @@ class WallpaperGeneratorViewModel: ObservableObject {
     }
     
     // MARK: - Font Selection Methods
-    func setFontCategory(_ category: FontCategory) {
-        print("🔤 Setting font category to: \(category.displayName)")
-        selectedFontCategory = category
-    }
-    
-    func setFont(_ fontName: String) {
-        print("✏️ Setting font to: \(fontName)")
-        if availableFonts.contains(fontName) {
-            selectedFont = fontName
-        } else {
-            print("⚠️ Attempted to set unavailable font: \(fontName)")
-            selectedFont = availableFonts.first ?? "System"
-        }
+    func setFont(_ font: FontDisplayInfo) {
+        print("✏️ Setting font to: \(font.fontName) (\(font.displayName))")
+        selectedFont = font
     }
     
     // MARK: - Wallpaper Generation
@@ -145,10 +132,10 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
         
         isGenerating = true
-        print("🔤 Using font: \(selectedFont) with size: \(fontSize)")
+        print("🔤 Using font: \(selectedFont.fontName) with size: \(fontSize)")
         
         // Use FontManager to get the correct font
-        let font = fontManager.getFont(name: selectedFont, size: CGFloat(fontSize))
+        let font = fontManager.getFont(name: selectedFont.fontName, size: CGFloat(fontSize))
         
         generatedImage = textRenderer.renderText(
             processedText,

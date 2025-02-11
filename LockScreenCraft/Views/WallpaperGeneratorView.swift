@@ -1,5 +1,11 @@
 import SwiftUI
 
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
+
 // MARK: - Generation Tab View
 struct GenerationTabView: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
@@ -334,20 +340,12 @@ struct TextControlPanel: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // Font Category Picker
-            Picker("Font Category", selection: $viewModel.selectedFontCategory) {
-                Text("System").tag(FontCategory.system)
-                Text("Chinese").tag(FontCategory.chinese)
-                Text("English").tag(FontCategory.english)
-                Text("Handwriting").tag(FontCategory.handwriting)
-            }
-            .pickerStyle(.segmented)
-            
             // Font Picker
             if !viewModel.availableFonts.isEmpty {
                 Picker("Font", selection: $viewModel.selectedFont) {
-                    ForEach(viewModel.availableFonts, id: \.self) { font in
-                        Text(font).tag(font)
+                    ForEach(viewModel.availableFonts, id: \.fontName) { font in
+                        Text(font.displayName)
+                            .tag(font)
                     }
                 }
                 .pickerStyle(.menu)
