@@ -118,7 +118,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
     func generateWallpaper() async {
         print("🎨 Starting wallpaper generation")
         // Use default text when input is empty
-        let finalText = inputText.isEmpty ? "test test \\ 在黑洞边缘坍塌，//我喝多了火焰，又发誓与神为敌。" : inputText
+        let finalText = inputText.isEmpty ? "test test \\ 1237890\\ 在黑洞边缘坍塌，//我喝多了火焰，又发誓与神为敌。" : inputText
         
         // Process text with line breaks
         let processedText = finalText

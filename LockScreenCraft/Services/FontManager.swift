@@ -32,7 +32,9 @@ class FontManager {
         "Ming_Chao": "明朝体",
         "Dingding_JinBuTi": "钉钉进步体",
         "PingFang SC": "苹方",
-        "Heiti SC": "黑体"
+        "Heiti SC": "黑体",
+        "jianghu-gufeng": "江湖古风",
+        "jiangnan-hand": "江南手书"
     ]
     
     func registerFonts() {
