@@ -34,7 +34,22 @@ class FontManager {
         "PingFang SC": "苹方",
         "Heiti SC": "黑体",
         "jianghu-gufeng": "江湖古风",
-        "jiangnan-hand": "江南手书"
+        "jiangnan-hand": "平方江南手写体",
+        "CooperZhengKai-1.1": "汇迹正楷",
+        "zhongzusong": "重族宋体",
+        "guangkekai": "程荣光刻楷体",
+        "bangbang": "重庆山城行楷",
+        "beili": "峄山碑篆体",
+        "summerxingkai": "夏行楷",
+        "PingFangLaiJiangHuFeiYangTi-2": "江湖飞扬体",
+        "zhaizaijiafentiao": "粉条手写体",
+        "linhai-li": "临海隶书",
+        "honglei-banshu": "鸿雷板书体",
+        "zongxi-li": "崇羲篆体",
+        "ZhiMangXing-Regular": "志莽行书",
+        "daizen": "daizen",
+        "sanji-xingkai": "三极行楷",
+        "ximaixihuan": "喜脉喜欢体"
     ]
     
     func registerFonts() {

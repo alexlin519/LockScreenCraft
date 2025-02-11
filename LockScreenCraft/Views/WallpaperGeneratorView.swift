@@ -359,7 +359,7 @@ struct TextControlPanel: View {
                 
                 Slider(
                     value: $viewModel.fontSize,
-                    in: 3...200,
+                    in: 3...600,
                     step: 1
                 )
                 
