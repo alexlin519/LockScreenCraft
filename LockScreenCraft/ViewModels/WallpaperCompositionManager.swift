@@ -60,30 +60,33 @@ class WallpaperCompositionManager: ObservableObject {
     private func loadAvailableBackgrounds() {
         print("\n=== 🔍 DEBUG: Loading Available Backgrounds ===")
         
-        // Debug bundle paths
-        let bundle = Bundle.main
-        print("📂 Bundle Path: \(bundle.bundlePath)")
-        print("📂 Resource Path: \(bundle.resourcePath ?? "nil")")
-        
-        // Try direct file system access first
-        let fileManager = FileManager.default
-        let backgroundPath = "\(bundle.bundlePath)/Resources/Background"
-        print("\n📂 Checking direct file system path: \(backgroundPath)")
-        
         // Try loading directly from the workspace path
         let workspacePath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources/Background"
         print("\n📂 Checking workspace path: \(workspacePath)")
-        if fileManager.fileExists(atPath: workspacePath) {
+        
+        if FileManager.default.fileExists(atPath: workspacePath) {
             print("✅ Background directory exists in workspace")
             do {
-                let items = try fileManager.contentsOfDirectory(atPath: workspacePath)
-                print("📝 Found \(items.count) items in workspace directory:")
-                items.forEach { print("   • \($0)") }
-                
-                // Add these files to our available backgrounds
-                availableBackgrounds = items.filter { 
+                let items = try FileManager.default.contentsOfDirectory(atPath: workspacePath)
+                let imageFiles = items.filter { 
                     let fileExtension = ($0 as NSString).pathExtension.lowercased()
                     return ["jpg", "jpeg", "png"].contains(fileExtension)
+                }.sorted()
+                
+                print("📝 Found \(imageFiles.count) image files:")
+                imageFiles.forEach { print("   • \($0)") }
+                
+                // Update available backgrounds
+                availableBackgrounds = imageFiles
+                
+                // Verify each image can be loaded
+                for filename in imageFiles {
+                    let fullPath = (workspacePath as NSString).appendingPathComponent(filename)
+                    if let _ = UIImage(contentsOfFile: fullPath) {
+                        print("✅ Successfully verified image: \(filename)")
+                    } else {
+                        print("⚠️ Failed to load image: \(filename)")
+                    }
                 }
             } catch {
                 print("❌ Error reading workspace directory: \(error.localizedDescription)")
@@ -92,30 +95,8 @@ class WallpaperCompositionManager: ObservableObject {
             print("❌ Background directory not found in workspace")
         }
         
-        // If we found backgrounds in the workspace, try to load them
-        if !availableBackgrounds.isEmpty {
-            print("\n📝 Found \(availableBackgrounds.count) background images:")
-            availableBackgrounds.forEach { print("   • \($0)") }
-        } else {
-            print("\n❌ No background images found in workspace")
-            
-            // Try alternative paths
-            print("\n🔍 Trying alternative resource paths:")
-            ["Resources/Background", "Background", "Resources/Backgrounds", "Backgrounds"].forEach { path in
-                if let urls = Bundle.main.urls(forResourcesWithExtension: nil, subdirectory: path) {
-                    print("   ✅ Found resources in: \(path)")
-                    urls.forEach { print("      • \($0.lastPathComponent)") }
-                } else {
-                    print("   ❌ No resources found in: \(path)")
-                }
-            }
-        }
-        
         print("\n📝 Final Summary:")
-        print("• Bundle Path: \(bundle.bundlePath)")
-        print("• Resource Path: \(bundle.resourcePath ?? "nil")")
         print("• Available Backgrounds Count: \(availableBackgrounds.count)")
-        print("• Background Names: \(availableBackgrounds)")
         print("=== 🔍 DEBUG: Background Loading End ===\n")
     }
     
