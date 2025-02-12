@@ -105,16 +105,21 @@ class WallpaperCompositionManager: ObservableObject {
         print("📂 Trying workspace path: \(workspacePath)")
         if let image = UIImage(contentsOfFile: workspacePath) {
             print("✅ Successfully loaded image from workspace path")
-            backgroundType = .image(image)
-            backgroundTransform.reset()
+            print("   Image size: \(image.size)")
+            print("   Image scale: \(image.scale)")
+            self.backgroundType = .image(image)
+            print("✅ Background type set to image")
             return
         }
         
         // Try bundle loading
+        print("📂 Trying bundle path: Resources/Background/\(filename)")
         if let image = UIImage(named: "Resources/Background/\(filename)") {
             print("✅ Successfully loaded image from bundle")
-            backgroundType = .image(image)
-            backgroundTransform.reset()
+            print("   Image size: \(image.size)")
+            print("   Image scale: \(image.scale)")
+            self.backgroundType = .image(image)
+            print("✅ Background type set to image")
         } else {
             print("❌ Failed to load image from bundle")
             print("🔍 Trying alternate paths...")
@@ -124,8 +129,10 @@ class WallpaperCompositionManager: ObservableObject {
                 print("📂 Found resource path: \(resourcePath)")
                 if let image = UIImage(contentsOfFile: resourcePath) {
                     print("✅ Successfully loaded image from resource path")
-                    backgroundType = .image(image)
-                    backgroundTransform.reset()
+                    print("   Image size: \(image.size)")
+                    print("   Image scale: \(image.scale)")
+                    self.backgroundType = .image(image)
+                    print("✅ Background type set to image")
                     return
                 } else {
                     print("❌ Failed to load image from resource path")
@@ -135,6 +142,15 @@ class WallpaperCompositionManager: ObservableObject {
             }
             
             showError("Failed to load background image")
+        }
+        
+        // Verify final state
+        if case .image(let finalImage) = self.backgroundType {
+            print("✅ Final verification: Background image is set")
+            print("   Final image size: \(finalImage.size)")
+            print("   Final image scale: \(finalImage.scale)")
+        } else {
+            print("❌ Final verification: No background image is set")
         }
         print("=== 🔍 DEBUG: Background Selection End ===\n")
     }
@@ -154,33 +170,64 @@ class WallpaperCompositionManager: ObservableObject {
     
     // This will be expanded later to handle composition with text
     func generateFinalImage(withText textImage: UIImage, device: DeviceConfig) -> UIImage? {
+        print("\n=== 🎨 DEBUG: Generating Final Image ===")
+        
+        // Debug background state
+        if case .image(let bgImage) = backgroundType {
+            print("✅ Background image exists:")
+            print("   Size: \(bgImage.size)")
+            print("   Scale: \(bgImage.scale)")
+        } else {
+            print("❌ No background image set in backgroundType")
+        }
+        
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
+        print("📐 Device Resolution: \(device.resolution)")
         
         let renderer = UIGraphicsImageRenderer(
             size: device.resolution,
             format: format
         )
         
-        return renderer.image { context in
-            // Draw background
+        let finalImage = renderer.image { context in
+            // Draw background first if available
             if case .image(let backgroundImage) = backgroundType {
-                // Calculate background frame based on transform
-                let size = device.resolution
-                let scaledWidth = size.width * backgroundTransform.scale
-                let scaledHeight = size.height * backgroundTransform.scale
-                let x = backgroundTransform.offset.width
-                let y = backgroundTransform.offset.height
+                print("✅ Drawing background image")
+                
+                // Scale background to fill the device resolution while maintaining aspect ratio
+                let bgSize = backgroundImage.size
+                let deviceSize = device.resolution
+                
+                let widthRatio = deviceSize.width / bgSize.width
+                let heightRatio = deviceSize.height / bgSize.height
+                let scale = max(widthRatio, heightRatio)
+                
+                let scaledWidth = bgSize.width * scale
+                let scaledHeight = bgSize.height * scale
+                
+                // Center the background
+                let x = (deviceSize.width - scaledWidth) / 2
+                let y = (deviceSize.height - scaledHeight) / 2
+                
+                print("   Background original size: \(bgSize)")
+                print("   Scaled size: \(scaledWidth) x \(scaledHeight)")
+                print("   Position: (\(x), \(y))")
                 
                 backgroundImage.draw(in: CGRect(x: x, y: y, width: scaledWidth, height: scaledHeight))
+                print("✅ Background drawn successfully")
             } else {
-                // Default white background if no background is set
+                print("ℹ️ No background image, using white background")
                 UIColor.white.setFill()
                 context.fill(CGRect(origin: .zero, size: device.resolution))
             }
             
             // Draw text image on top
+            print("✅ Drawing text overlay")
             textImage.draw(in: CGRect(origin: .zero, size: device.resolution))
         }
+        
+        print("📱 Final image size: \(finalImage.size)")
+        return finalImage
     }
 } 

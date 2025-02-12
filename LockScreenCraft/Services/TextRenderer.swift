@@ -23,8 +23,8 @@ class TextRenderer {
         )
         
         return renderer.image { context in
-            // Fill background with white
-            UIColor.white.setFill()
+            // Use clear background instead of white
+            UIColor.clear.setFill()
             context.fill(CGRect(origin: .zero, size: device.resolution))
             
             // Calculate optimal font size

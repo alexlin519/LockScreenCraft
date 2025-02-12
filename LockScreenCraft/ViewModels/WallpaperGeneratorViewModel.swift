@@ -184,7 +184,8 @@ class WallpaperGeneratorViewModel: ObservableObject {
         // Use FontManager to get the correct font
         let font = fontManager.getFont(name: selectedFont.fontName, size: CGFloat(fontSize))
         
-        generatedImage = textRenderer.renderText(
+        // Generate the text image
+        let textImage = textRenderer.renderText(
             processedText,
             font: font,
             color: UIColor(selectedColor),
@@ -192,11 +193,14 @@ class WallpaperGeneratorViewModel: ObservableObject {
             alignment: textAlignment
         )
         
-        if generatedImage == nil {
-            print("⚠️ Failed to generate image")
-            showError(message: "Failed to generate wallpaper")
+        // Generate the final composite image
+        let compositionManager = WallpaperCompositionManager.shared
+        if let finalImage = compositionManager.generateFinalImage(withText: textImage, device: selectedDevice) {
+            print("✅ Successfully generated wallpaper with background")
+            generatedImage = finalImage
         } else {
-            print("✅ Successfully generated wallpaper")
+            print("⚠️ Failed to composite with background, using text-only image")
+            generatedImage = textImage
         }
         
         isGenerating = false
