@@ -359,21 +359,32 @@ struct CustomColorPicker: View {
     @Binding var savedColors: [Color]
     
     var body: some View {
-        VStack {
-            ColorPicker("Select Color", selection: $selectedColor)
-                .labelsHidden()
-            
-            Button("Save Color") {
-                if !savedColors.contains(selectedColor) {
-                    savedColors.append(selectedColor)
+        NavigationView {
+            VStack(spacing: 20) {
+                ColorPicker("", selection: $selectedColor, supportsOpacity: false)
+                    .labelsHidden()
+                    .frame(height: 300)
+                
+                Button("Save Color") {
+                    if !savedColors.contains(selectedColor) {
+                        savedColors.append(selectedColor)
+                    }
+                    showColorPicker = false
                 }
-                showColorPicker = false
+                .buttonStyle(.borderedProminent)
             }
-            .buttonStyle(.bordered)
+            .padding()
+            .navigationTitle("Choose Color")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        showColorPicker = false
+                    }
+                }
+            }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(10)
+        .presentationDetents([.medium])
     }
 }
 
@@ -420,31 +431,35 @@ struct TextControlPanel: View {
             
             // Color Selection
             VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Button(action: { viewModel.showColorPicker = true }) {
-                        Image(systemName: "circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(viewModel.selectedColor)
-                            .overlay(
-                                Image(systemName: "paintpalette.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.white)
-                            )
-                    }
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(viewModel.savedColors, id: \.self) { color in
-                                ColorPickerButton(
-                                    color: color,
-                                    isSelected: color == viewModel.selectedColor
-                                ) {
-                                    viewModel.selectedColor = color
-                                }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        // Custom color picker button
+                        Button(action: { viewModel.showColorPicker = true }) {
+                            Circle()
+                                .fill(
+                                    AngularGradient(
+                                        gradient: Gradient(colors: [.red, .yellow, .green, .blue, .purple, .red]),
+                                        center: .center
+                                    )
+                                )
+                                .frame(width: 30, height: 30)
+                                .overlay(
+                                    Circle()
+                                        .stroke(.gray, lineWidth: 2)
+                                )
+                        }
+                        
+                        // Preset colors
+                        ForEach(viewModel.savedColors, id: \.self) { color in
+                            ColorPickerButton(
+                                color: color,
+                                isSelected: color == viewModel.selectedColor
+                            ) {
+                                viewModel.selectedColor = color
                             }
                         }
-                        .padding(.horizontal, 4)
                     }
+                    .padding(.horizontal, 4)
                 }
             }
             

@@ -34,11 +34,22 @@ class WallpaperGeneratorViewModel: ObservableObject {
     // MARK: - Text Styling Properties
     private let maxFontSize: Double = 600.0  // Maximum font size limit
     private let minFontSize: Double = 3.0    // Minimum font size limit
-    @Published var fontSize: Double = 90.0
+    @Published var fontSize: Double = 300.0   // Default font size
     @Published var textAlignment: NSTextAlignment = .center
     @Published var isLoadingFonts: Bool = false
-    @Published var selectedColor: Color = .black
-    @Published var showColorPicker = false
+    @Published var selectedColor: Color = .black {
+        didSet {
+            updateWallpaperWithDebounce()
+        }
+    }
+    @Published var showColorPicker = false {
+        didSet {
+            if !showColorPicker {
+                // When color picker is dismissed, update the wallpaper
+                updateWallpaperWithDebounce()
+            }
+        }
+    }
     @Published var savedColors: [Color] = [
         .black,
         .gray,
@@ -94,6 +105,8 @@ class WallpaperGeneratorViewModel: ObservableObject {
         if fontSize < maxFontSize {
             fontSize += 1.0
             updateWallpaperWithDebounce()
+        } else {
+            showError(message: "Font size cannot exceed \(Int(maxFontSize))")
         }
     }
     
@@ -101,17 +114,29 @@ class WallpaperGeneratorViewModel: ObservableObject {
         if fontSize > minFontSize {
             fontSize -= 1.0
             updateWallpaperWithDebounce()
+        } else {
+            showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
         }
     }
     
     func setFontSize(_ size: Double) {
-        fontSize = min(max(size.rounded(), minFontSize), maxFontSize)
+        if size > maxFontSize {
+            showError(message: "Font size cannot exceed \(Int(maxFontSize))")
+            fontSize = maxFontSize
+        } else if size < minFontSize {
+            showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
+            fontSize = minFontSize
+        } else {
+            fontSize = size.rounded()
+        }
         updateWallpaperWithDebounce()
     }
     
     func setFontSizeFromString(_ sizeString: String) {
         if let size = Double(sizeString) {
             setFontSize(size)
+        } else {
+            showError(message: "Please enter a valid number")
         }
     }
     
