@@ -251,14 +251,22 @@ class WallpaperCompositionManager: ObservableObject {
         let bgSize = image.size
         let widthRatio = size.width / bgSize.width
         let heightRatio = size.height / bgSize.height
-        let scale = max(widthRatio, heightRatio)
+        let baseScale = max(widthRatio, heightRatio)
         
-        let scaledWidth = bgSize.width * scale
-        let scaledHeight = bgSize.height * scale
-        let x = (size.width - scaledWidth) / 2
-        let y = (size.height - scaledHeight) / 2
+        // Apply transform scale
+        let finalScale = baseScale * backgroundTransform.scale
+        let scaledWidth = bgSize.width * finalScale
+        let scaledHeight = bgSize.height * finalScale
         
-        image.draw(in: CGRect(x: x, y: y, width: scaledWidth, height: scaledHeight))
+        // Calculate center position
+        let centerX = (size.width - scaledWidth) / 2
+        let centerY = (size.height - scaledHeight) / 2
+        
+        // Apply transform offset
+        let finalX = centerX + backgroundTransform.offset.width
+        let finalY = centerY + backgroundTransform.offset.height
+        
+        image.draw(in: CGRect(x: finalX, y: finalY, width: scaledWidth, height: scaledHeight))
     }
     
     private func drawGradient(_ config: GradientConfig, in context: UIGraphicsImageRendererContext, size: CGSize) {

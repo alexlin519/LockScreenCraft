@@ -73,6 +73,176 @@ struct PreviewTabView: View {
     }
 }
 
+// MARK: - Adjust Tab View
+struct AdjustTabView: View {
+    @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    @State private var isAdjusting = false
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                if let image = viewModel.generatedImage {
+                    Button(action: {
+                        isAdjusting = true
+                    }) {
+                        VStack {
+                            Image(uiImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
+                                .cornerRadius(20)
+                                .shadow(radius: 5)
+                                .overlay(DeviceFrameOverlay(device: viewModel.selectedDevice))
+                            
+                            Label("Tap to Adjust", systemImage: "crop")
+                                .font(.headline)
+                                .padding(.top)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    ContentUnavailableView("Generate a wallpaper first", systemImage: "photo")
+                }
+            }
+            .padding()
+            .navigationTitle("Adjust")
+            .fullScreenCover(isPresented: $isAdjusting) {
+                AdjustmentView(viewModel: viewModel, isPresented: $isAdjusting)
+            }
+        }
+    }
+}
+
+// MARK: - Adjustment View
+struct AdjustmentView: View {
+    @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    @ObservedObject private var compositionManager = WallpaperCompositionManager.shared
+    @Binding var isPresented: Bool
+    
+    // Gesture State
+    @State private var scale: CGFloat = 1.0
+    @State private var offset = CGSize.zero
+    @State private var lastScale: CGFloat = 1.0
+    @State private var lastOffset = CGSize.zero
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // Background
+                Color.black
+                    .ignoresSafeArea()
+                
+                if let image = viewModel.generatedImage {
+                    // Calculate scale factor to match device resolution
+                    let screenScale = UIScreen.main.scale
+                    let deviceWidth = viewModel.selectedDevice.resolution.width / screenScale
+                    let deviceHeight = viewModel.selectedDevice.resolution.height / screenScale
+                    let screenWidth = geometry.size.width
+                    let screenHeight = geometry.size.height
+                    
+                    // Calculate scaling to fit screen while maintaining aspect ratio
+                    let widthRatio = screenWidth / deviceWidth
+                    let heightRatio = screenHeight / deviceHeight
+                    let scale = min(widthRatio, heightRatio)
+                    
+                    // Device frame with background image
+                    ZStack {
+                        // Background image (if it exists)
+                        if case .image(let bgImage) = compositionManager.backgroundType {
+                            Image(uiImage: bgImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .scaleEffect(self.scale)
+                                .offset(x: offset.width, y: offset.height)
+                        }
+                        
+                        // Wallpaper preview
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    }
+                    .frame(
+                        width: deviceWidth * scale,
+                        height: deviceHeight * scale
+                    )
+                    .overlay(
+                        DeviceFrameOverlay(device: viewModel.selectedDevice)
+                            .opacity(0.3)
+                    )
+                    .gesture(
+                        SimultaneousGesture(
+                            MagnificationGesture()
+                                .onChanged { value in
+                                    self.scale = lastScale * value
+                                }
+                                .onEnded { value in
+                                    lastScale = self.scale
+                                    updateTransform()
+                                },
+                            DragGesture()
+                                .onChanged { value in
+                                    offset = CGSize(
+                                        width: lastOffset.width + value.translation.width,
+                                        height: lastOffset.height + value.translation.height
+                                    )
+                                }
+                                .onEnded { value in
+                                    lastOffset = offset
+                                    updateTransform()
+                                }
+                        )
+                    )
+                }
+                
+                // Toolbar overlay
+                VStack {
+                    HStack {
+                        Button(action: {
+                            resetTransform()
+                        }) {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.title2)
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            isPresented = false
+                        }) {
+                            Text("Done")
+                                .font(.headline)
+                        }
+                    }
+                    .padding()
+                    .foregroundColor(.white)
+                    
+                    Spacer()
+                }
+            }
+        }
+        .ignoresSafeArea()
+    }
+    
+    private func updateTransform() {
+        let transform = Transform(scale: scale, offset: offset)
+        compositionManager.applyTransform(transform)
+        Task {
+            await viewModel.generateWallpaper()
+        }
+    }
+    
+    private func resetTransform() {
+        scale = 1.0
+        offset = .zero
+        lastScale = 1.0
+        lastOffset = .zero
+        compositionManager.resetTransform()
+        Task {
+            await viewModel.generateWallpaper()
+        }
+    }
+}
+
 // MARK: - Main View
 struct WallpaperGeneratorView: View {
     @StateObject private var viewModel = WallpaperGeneratorViewModel()
@@ -97,6 +267,12 @@ struct WallpaperGeneratorView: View {
                 Label("Preview", systemImage: "photo")
             }
             .tag(1)
+            
+            AdjustTabView(viewModel: viewModel)
+                .tabItem {
+                    Label("Adjust", systemImage: "crop")
+                }
+                .tag(2)
         }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
@@ -123,7 +299,7 @@ struct TextInputSection: View {
             TextField("输入文字(最多200字)", text: $inputText, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .frame(height: 200)
-                .lineLimit(5...) 
+                .lineLimit(5...)
                 .textInputAutocapitalization(.none)
                 .autocorrectionDisabled()
                 .textContentType(.none)
@@ -165,7 +341,7 @@ struct ActionButtonsSection: View {
             Button(action: {
                 Task {
                     await viewModel.generateWallpaper()
-                    selectedTab = 1
+                selectedTab = 1
                 }
             }) {
                 Label("Generate Wallpaper", systemImage: "wand.and.stars")
@@ -192,8 +368,8 @@ struct PreviewSection: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            if let image = viewModel.generatedImage {
-                GeometryReader { geometry in
+        if let image = viewModel.generatedImage {
+            GeometryReader { geometry in
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
@@ -215,10 +391,10 @@ struct PreviewSection: View {
                                 isFullScreenPreview = true
                             }
                         }
-                }
-                .frame(height: 400)
-            } else {
-                ContentUnavailableView("No Preview", systemImage: "photo")
+            }
+            .frame(height: 400)
+        } else {
+            ContentUnavailableView("No Preview", systemImage: "photo")
             }
         }
     }
@@ -421,8 +597,8 @@ struct TextStyleSection: View {
                     ))
                         .multilineTextAlignment(.center)
                         .monospacedDigit()
-                        .frame(width: 50)
-                        .textFieldStyle(.roundedBorder)
+                    .frame(width: 50)
+                    .textFieldStyle(.roundedBorder)
                         .keyboardType(.numberPad)
                     
                     Button(action: { viewModel.increaseFontSize() }) {
@@ -453,12 +629,12 @@ struct TextStyleSection: View {
                     .padding(.horizontal, 4)
                 }
             }
-            
-            // Text Alignment Controls
-            HStack {
+                
+                // Text Alignment Controls
+                HStack {
                 ForEach([NSTextAlignment.left, .center, .right], id: \.self) { alignment in
-                    Button(action: { viewModel.setTextAlignment(alignment) }) {
-                        Image(systemName: alignmentIcon(for: alignment))
+                            Button(action: { viewModel.setTextAlignment(alignment) }) {
+                                Image(systemName: alignmentIcon(for: alignment))
                             .foregroundColor(viewModel.textAlignment == alignment ? .accentColor : .primary)
                     }
                 }
