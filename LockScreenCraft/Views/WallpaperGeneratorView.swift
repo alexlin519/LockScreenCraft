@@ -177,41 +177,112 @@ struct ActionButtonsSection: View {
 
 struct PreviewSection: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    @ObservedObject private var compositionManager = WallpaperCompositionManager.shared
     @Binding var isFullScreenPreview: Bool
     @Binding var thumbnailScale: CGFloat
     
+    // State for background image transformation
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    
     var body: some View {
-        if let image = viewModel.generatedImage {
-            GeometryReader { geometry in
-                VStack {
-                    Spacer()
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: geometry.size.width)
-                        .frame(maxHeight: 400)
-                        .cornerRadius(20)
-                        .shadow(radius: 5)
-                        .overlay(DeviceFrameOverlay(device: viewModel.selectedDevice))
-                        .scaleEffect(thumbnailScale)
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.3)) {
-                                thumbnailScale = 1.02
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    withAnimation(.spring(response: 0.3)) {
-                                        thumbnailScale = 1.0
-                                    }
-                                }
-                                isFullScreenPreview = true
-                            }
+        VStack(spacing: 16) {
+            if let image = viewModel.generatedImage {
+                GeometryReader { geometry in
+                    ZStack {
+                        // Background Layer
+                        if case .image(let backgroundImage) = compositionManager.backgroundType {
+                            Image(uiImage: backgroundImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: geometry.size.width * scale, height: geometry.size.height * scale)
+                                .offset(offset)
+                                .gesture(
+                                    // Pan gesture
+                                    DragGesture()
+                                        .onChanged { value in
+                                            offset = CGSize(
+                                                width: lastOffset.width + value.translation.width,
+                                                height: lastOffset.height + value.translation.height
+                                            )
+                                        }
+                                        .onEnded { value in
+                                            lastOffset = offset
+                                            compositionManager.applyTransform(Transform(scale: scale, offset: offset))
+                                        }
+                                )
+                                .gesture(
+                                    // Pinch gesture
+                                    MagnificationGesture()
+                                        .onChanged { value in
+                                            let delta = value / lastScale
+                                            lastScale = value
+                                            scale = max(1.0, scale * delta)
+                                        }
+                                        .onEnded { value in
+                                            lastScale = 1.0
+                                            compositionManager.applyTransform(Transform(scale: scale, offset: offset))
+                                        }
+                                )
                         }
-                    Spacer()
+                        
+                        // Text Layer
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: geometry.size.width)
+                            .frame(maxHeight: 400)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .cornerRadius(20)
+                    .shadow(radius: 5)
+                    .overlay(DeviceFrameOverlay(device: viewModel.selectedDevice))
+                    .clipped()
+                    .scaleEffect(thumbnailScale)
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.3)) {
+                            thumbnailScale = 1.02
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                withAnimation(.spring(response: 0.3)) {
+                                    thumbnailScale = 1.0
+                                }
+                            }
+                            isFullScreenPreview = true
+                        }
+                    }
                 }
-                .frame(maxWidth: .infinity)
+                .frame(height: 400)
+                
+                // Background adjustment controls
+                if case .image = compositionManager.backgroundType {
+                    HStack {
+                        Button(action: {
+                            scale = 1.0
+                            lastScale = 1.0
+                            offset = .zero
+                            lastOffset = .zero
+                            compositionManager.resetTransform()
+                        }) {
+                            Label("Reset Background", systemImage: "arrow.counterclockwise")
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            compositionManager.applyTransform(Transform(scale: scale, offset: offset))
+                        }) {
+                            Label("Apply Changes", systemImage: "checkmark")
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding(.horizontal)
+                }
+            } else {
+                ContentUnavailableView("No Preview", systemImage: "photo")
             }
-            .frame(height: 400)
-        } else {
-            ContentUnavailableView("No Preview", systemImage: "photo")
         }
     }
 }
@@ -487,13 +558,44 @@ struct TextStyleSection: View {
 }
 
 struct BackgroundSettingsSection: View {
+    @StateObject private var compositionManager = WallpaperCompositionManager.shared
+    
+    private let columns = [
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
+    
     var body: some View {
-        VStack(spacing: 16) {
-            ContentUnavailableView {
-                Label("Coming Soon", systemImage: "photo.fill")
-            } description: {
-                Text("Background customization options will be available in a future update.")
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(compositionManager.availableBackgrounds, id: \.self) { filename in
+                    Button(action: {
+                        compositionManager.selectBackground(named: filename)
+                    }) {
+                        if let image = UIImage(named: "Resources/Background/\(filename)") {
+                            Image(uiImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(height: 100)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                        } else {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.gray.opacity(0.1))
+                                .frame(height: 100)
+                                .overlay(
+                                    Image(systemName: "photo.fill")
+                                        .foregroundColor(.gray)
+                                )
+                        }
+                    }
+                }
             }
+            .padding(.top, 8)
         }
         .padding(.horizontal)
     }
