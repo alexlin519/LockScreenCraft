@@ -11,7 +11,8 @@ class TextRenderer {
         _ text: String,
         font: UIFont,
         color: UIColor,
-        device: DeviceConfig
+        device: DeviceConfig,
+        alignment: NSTextAlignment = .center
     ) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
@@ -36,7 +37,7 @@ class TextRenderer {
             
             // Setup text attributes
             let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .center
+            paragraphStyle.alignment = alignment
             
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: optimizedFont,
@@ -52,8 +53,21 @@ class TextRenderer {
                 context: nil
             )
             
-            // Center text in safe area
-            let textX = safeArea.minX + (safeArea.width - textSize.width) / 2
+            // Position text based on alignment
+            var textX: CGFloat
+            switch alignment {
+            case .left:
+                textX = safeArea.minX
+            case .center:
+                textX = safeArea.minX + (safeArea.width - textSize.width) / 2
+            case .right:
+                textX = safeArea.maxX - textSize.width
+            case .justified:
+                textX = safeArea.minX
+            default:
+                textX = safeArea.minX + (safeArea.width - textSize.width) / 2
+            }
+            
             let textY = safeArea.minY + (safeArea.height - textSize.height) / 2
             
             text.draw(
@@ -70,8 +84,8 @@ class TextRenderer {
         startingFont: UIFont,
         safeArea: CGRect
     ) -> UIFont {
-        var currentSize = maximumFontSize
-        var font = startingFont.withSize(currentSize)
+        var currentSize = startingFont.pointSize
+        var font = startingFont
         
         while currentSize > minimumFontSize {
             let attributes: [NSAttributedString.Key: Any] = [
@@ -90,7 +104,7 @@ class TextRenderer {
             }
             
             currentSize -= fontSizeStep
-            font = startingFont.withSize(currentSize)
+            font = font.withSize(currentSize)
         }
         
         return font

@@ -1,5 +1,11 @@
 import SwiftUI
 
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
+
 // MARK: - Generation Tab View
 struct GenerationTabView: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
@@ -28,18 +34,23 @@ struct PreviewTabView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
+            VStack(spacing: 16) {
                 PreviewSection(
                     viewModel: viewModel,
                     isFullScreenPreview: $isFullScreenPreview,
                     thumbnailScale: $thumbnailScale
                 )
+                .frame(maxHeight: UIScreen.main.bounds.height * 0.5)
                 
-                FutureSettingsSection()
+                // Show text controls regardless of image presence
+                TextControlPanel(viewModel: viewModel)
+                    .padding(.horizontal)
                 
                 if viewModel.generatedImage != nil {
                     SaveButton(viewModel: viewModel)
                 }
+                
+                Spacer(minLength: 0)
             }
             .navigationTitle("Preview")
             .fullScreenCover(isPresented: $isFullScreenPreview) {
@@ -143,8 +154,10 @@ struct ActionButtonsSection: View {
     var body: some View {
         VStack(spacing: 16) {
             Button(action: {
-                viewModel.generateWallpaper()
-                selectedTab = 1
+                Task {
+                    await viewModel.generateWallpaper()
+                    selectedTab = 1
+                }
             }) {
                 Label("Generate Wallpaper", systemImage: "wand.and.stars")
                     .frame(maxWidth: .infinity)
@@ -321,20 +334,122 @@ struct DeviceFrameOverlay: View {
     }
 }
 
+// MARK: - Color Picker Views
+struct ColorPickerButton: View {
+    let color: Color
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Circle()
+                .fill(color)
+                .frame(width: 30, height: 30)
+                .overlay(
+                    Circle()
+                        .stroke(isSelected ? .blue : .gray, lineWidth: 2)
+                )
+        }
+    }
+}
+
+struct CompactColorPicker: View {
+    @Binding var selection: Color
+    
+    var body: some View {
+        ColorPicker("", selection: $selection)
+            .labelsHidden()
+            .scaleEffect(0.8)
+            .frame(height: 25)
+            .presentationCompactAdaptation(.popover)
+    }
+}
+
+// MARK: - Text Control Panel
+struct TextControlPanel: View {
+    @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Font Picker
+            if !viewModel.availableFonts.isEmpty {
+                Picker("Font", selection: $viewModel.selectedFont) {
+                    ForEach(viewModel.availableFonts, id: \.fontName) { font in
+                        Text(font.displayName)
+                            .tag(font)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+            
+            // Font Size Controls
+            HStack {
+                Button(action: { viewModel.decreaseFontSize() }) {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.title2)
+                }
+                
+                TextField("", text: Binding(
+                    get: { String(Int(viewModel.fontSize)) },
+                    set: { viewModel.setFontSizeFromString($0) }
+                ))
+                    .multilineTextAlignment(.center)
+                    .monospacedDigit()
+                    .frame(width: 50)
+                    .textFieldStyle(.roundedBorder)
+                    .keyboardType(.numberPad)
+                
+                Button(action: { viewModel.increaseFontSize() }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                }
+            }
+            .foregroundStyle(.primary)
+            
+            // Color Selection
+            VStack(alignment: .leading, spacing: 8) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        // Native Color Picker with compact presentation
+                        CompactColorPicker(selection: $viewModel.selectedColor)
+                        
+                        // Preset colors
+                        ForEach(viewModel.savedColors, id: \.self) { color in
+                            ColorPickerButton(
+                                color: color,
+                                isSelected: color == viewModel.selectedColor
+                            ) {
+                                viewModel.selectedColor = color
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 4)
+                }
+            }
+            
+            // Text Alignment Controls
+            HStack {
+                ForEach([NSTextAlignment.left, .center, .right], id: \.self) { alignment in
+                    Button(action: { viewModel.setTextAlignment(alignment) }) {
+                        Image(systemName: alignmentIcon(for: alignment))
+                            .foregroundColor(viewModel.textAlignment == alignment ? .accentColor : .primary)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func alignmentIcon(for alignment: NSTextAlignment) -> String {
+        switch alignment {
+        case .left: return "text.alignleft"
+        case .center: return "text.aligncenter"
+        case .right: return "text.alignright"
+        default: return "text.alignleft"
+        }
+    }
+}
 
 #Preview {
     WallpaperGeneratorView()
-        //.device(.iPhone12ProMax)
 }
-// #if DEBUG
-// struct WallpaperGeneratorView_Previews: PreviewProvider {
-//     static var previews: some View {
-//         WallpaperGeneratorView()
-//             .previewDevice(PreviewDevice(rawValue: "iPhone 12 Pro Max"))
-//             .previewDisplayName("iPhone 12 Pro Max")
-//             .previewLayout(.device)
-//             .previewInterfaceOrientation(.portrait)
-//     }
-// }
-// #endif
 
