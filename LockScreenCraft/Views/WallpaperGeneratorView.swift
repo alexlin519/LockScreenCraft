@@ -488,6 +488,7 @@ struct TextStyleSection: View {
 struct BackgroundSettingsSection: View {
     @StateObject private var compositionManager = WallpaperCompositionManager.shared
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    @State private var isProcessing = false
     
     private let columns = [
         GridItem(.flexible()),
@@ -500,22 +501,36 @@ struct BackgroundSettingsSection: View {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(compositionManager.availableBackgrounds, id: \.self) { filename in
                     Button(action: {
+                        guard !isProcessing else { return }  // Prevent multiple clicks
+                        isProcessing = true
                         compositionManager.selectBackground(named: filename)
                         Task {
                             await viewModel.generateWallpaper()
+                            isProcessing = false
                         }
                     }) {
                         let workspacePath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
                         if let image = UIImage(contentsOfFile: workspacePath) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(height: 100)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .overlay(
+                            ZStack {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(height: 100)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    )
+                                
+                                if isProcessing {
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                )
+                                        .fill(.ultraThinMaterial)
+                                        .overlay(
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                        )
+                                }
+                            }
                         } else {
                             RoundedRectangle(cornerRadius: 8)
                                 .fill(Color.gray.opacity(0.1))
@@ -526,6 +541,7 @@ struct BackgroundSettingsSection: View {
                                 )
                         }
                     }
+                    .disabled(isProcessing)  // Disable all buttons while processing
                 }
             }
             .padding(.top, 8)
