@@ -32,9 +32,25 @@ class WallpaperGeneratorViewModel: ObservableObject {
     @Published var showError = false
     
     // MARK: - Text Styling Properties
+    private let maxFontSize: Double = 600.0  // Maximum font size limit
+    private let minFontSize: Double = 3.0    // Minimum font size limit
     @Published var fontSize: Double = 90.0
     @Published var textAlignment: NSTextAlignment = .center
     @Published var isLoadingFonts: Bool = false
+    @Published var selectedColor: Color = .black
+    @Published var showColorPicker = false
+    @Published var savedColors: [Color] = [
+        .black,
+        .gray,
+        .white,
+        .red,
+        .orange,
+        .yellow,
+        .green,
+        .blue,
+        .purple,
+        .pink
+    ]
     
     // MARK: - Font Management
     private var fontDebounceTimer: Timer?
@@ -75,22 +91,28 @@ class WallpaperGeneratorViewModel: ObservableObject {
     
     // MARK: - Font Size Methods
     func increaseFontSize() {
-        if fontSize < 200.0 {
+        if fontSize < maxFontSize {
             fontSize += 1.0
             updateWallpaperWithDebounce()
         }
     }
     
     func decreaseFontSize() {
-        if fontSize > 3.0 {
+        if fontSize > minFontSize {
             fontSize -= 1.0
             updateWallpaperWithDebounce()
         }
     }
     
     func setFontSize(_ size: Double) {
-        fontSize = min(max(size.rounded(), 3.0), 200.0)
+        fontSize = min(max(size.rounded(), minFontSize), maxFontSize)
         updateWallpaperWithDebounce()
+    }
+    
+    func setFontSizeFromString(_ sizeString: String) {
+        if let size = Double(sizeString) {
+            setFontSize(size)
+        }
     }
     
     // MARK: - Text Alignment Methods
@@ -140,7 +162,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
         generatedImage = textRenderer.renderText(
             processedText,
             font: font,
-            color: .black,
+            color: UIColor(selectedColor),
             device: selectedDevice,
             alignment: textAlignment
         )

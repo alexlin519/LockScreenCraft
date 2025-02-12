@@ -334,6 +334,49 @@ struct DeviceFrameOverlay: View {
     }
 }
 
+// MARK: - Color Picker Views
+struct ColorPickerButton: View {
+    let color: Color
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Circle()
+                .fill(color)
+                .frame(width: 30, height: 30)
+                .overlay(
+                    Circle()
+                        .stroke(isSelected ? .blue : .gray, lineWidth: 2)
+                )
+        }
+    }
+}
+
+struct CustomColorPicker: View {
+    @Binding var selectedColor: Color
+    @Binding var showColorPicker: Bool
+    @Binding var savedColors: [Color]
+    
+    var body: some View {
+        VStack {
+            ColorPicker("Select Color", selection: $selectedColor)
+                .labelsHidden()
+            
+            Button("Save Color") {
+                if !savedColors.contains(selectedColor) {
+                    savedColors.append(selectedColor)
+                }
+                showColorPicker = false
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+        .cornerRadius(10)
+    }
+}
+
 // MARK: - Text Control Panel
 struct TextControlPanel: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
@@ -354,17 +397,54 @@ struct TextControlPanel: View {
             // Font Size Controls
             HStack {
                 Button(action: { viewModel.decreaseFontSize() }) {
-                    Image(systemName: "minus.circle")
+                    Image(systemName: "minus.circle.fill")
+                        .font(.title2)
                 }
                 
-                Slider(
-                    value: $viewModel.fontSize,
-                    in: 3...600,
-                    step: 1
-                )
+                TextField("", text: Binding(
+                    get: { String(Int(viewModel.fontSize)) },
+                    set: { viewModel.setFontSizeFromString($0) }
+                ))
+                    .multilineTextAlignment(.center)
+                    .monospacedDigit()
+                    .frame(width: 50)
+                    .textFieldStyle(.roundedBorder)
+                    .keyboardType(.numberPad)
                 
                 Button(action: { viewModel.increaseFontSize() }) {
-                    Image(systemName: "plus.circle")
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                }
+            }
+            .foregroundStyle(.primary)
+            
+            // Color Selection
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Button(action: { viewModel.showColorPicker = true }) {
+                        Image(systemName: "circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(viewModel.selectedColor)
+                            .overlay(
+                                Image(systemName: "paintpalette.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.white)
+                            )
+                    }
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(viewModel.savedColors, id: \.self) { color in
+                                ColorPickerButton(
+                                    color: color,
+                                    isSelected: color == viewModel.selectedColor
+                                ) {
+                                    viewModel.selectedColor = color
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 4)
+                    }
                 }
             }
             
@@ -377,6 +457,14 @@ struct TextControlPanel: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $viewModel.showColorPicker) {
+            CustomColorPicker(
+                selectedColor: $viewModel.selectedColor,
+                showColorPicker: $viewModel.showColorPicker,
+                savedColors: $viewModel.savedColors
+            )
+            .presentationDetents([.height(200)])
         }
     }
     
