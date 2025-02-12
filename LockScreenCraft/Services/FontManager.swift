@@ -119,7 +119,7 @@ class FontManager {
             let success = CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error)
             
             if success {
-                if let dataProvider = CGDataProvider(url: url as CFURL),
+            if let dataProvider = CGDataProvider(url: url as CFURL),
                    let cgFont = CGFont(dataProvider) {
                     let postScriptName = cgFont.postScriptName as String? ?? ""
                     

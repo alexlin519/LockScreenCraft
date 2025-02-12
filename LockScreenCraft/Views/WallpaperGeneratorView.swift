@@ -353,38 +353,15 @@ struct ColorPickerButton: View {
     }
 }
 
-struct CustomColorPicker: View {
-    @Binding var selectedColor: Color
-    @Binding var showColorPicker: Bool
-    @Binding var savedColors: [Color]
+struct CompactColorPicker: View {
+    @Binding var selection: Color
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                ColorPicker("", selection: $selectedColor, supportsOpacity: false)
-                    .labelsHidden()
-                    .frame(height: 300)
-                
-                Button("Save Color") {
-                    if !savedColors.contains(selectedColor) {
-                        savedColors.append(selectedColor)
-                    }
-                    showColorPicker = false
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .padding()
-            .navigationTitle("Choose Color")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showColorPicker = false
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium])
+        ColorPicker("", selection: $selection)
+            .labelsHidden()
+            .scaleEffect(0.8)
+            .frame(height: 25)
+            .presentationCompactAdaptation(.popover)
     }
 }
 
@@ -433,21 +410,8 @@ struct TextControlPanel: View {
             VStack(alignment: .leading, spacing: 8) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        // Custom color picker button
-                        Button(action: { viewModel.showColorPicker = true }) {
-                            Circle()
-                                .fill(
-                                    AngularGradient(
-                                        gradient: Gradient(colors: [.red, .yellow, .green, .blue, .purple, .red]),
-                                        center: .center
-                                    )
-                                )
-                                .frame(width: 30, height: 30)
-                                .overlay(
-                                    Circle()
-                                        .stroke(.gray, lineWidth: 2)
-                                )
-                        }
+                        // Native Color Picker with compact presentation
+                        CompactColorPicker(selection: $viewModel.selectedColor)
                         
                         // Preset colors
                         ForEach(viewModel.savedColors, id: \.self) { color in
@@ -472,14 +436,6 @@ struct TextControlPanel: View {
                     }
                 }
             }
-        }
-        .sheet(isPresented: $viewModel.showColorPicker) {
-            CustomColorPicker(
-                selectedColor: $viewModel.selectedColor,
-                showColorPicker: $viewModel.showColorPicker,
-                savedColors: $viewModel.savedColors
-            )
-            .presentationDetents([.height(200)])
         }
     }
     
