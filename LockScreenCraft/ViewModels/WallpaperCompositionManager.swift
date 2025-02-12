@@ -1,12 +1,28 @@
 import SwiftUI
 
 // MARK: - Background Types
+enum GradientDirection {
+    case linear(angle: Double)
+    case radial
+}
+
+struct GradientConfig {
+    var startColor: Color
+    var endColor: Color
+    var direction: GradientDirection
+}
+
+struct FrostedConfig {
+    var baseColor: Color
+    var intensity: Double  // 0-1
+    var opacity: Double    // 0-1
+}
+
 enum BackgroundType {
     case image(UIImage)
-    // Future types:
-    // case solidColor(Color)
-    // case gradient(GradientConfig)
-    // case frosted(Color, Double)
+    case solidColor(Color)
+    case gradient(GradientConfig)
+    case frosted(FrostedConfig)
 }
 
 // MARK: - Transform
@@ -27,11 +43,18 @@ class WallpaperCompositionManager: ObservableObject {
     @Published var backgroundType: BackgroundType?
     @Published var backgroundTransform = Transform()
     @Published var availableBackgrounds: [String] = []
+    @Published var userUploadedBackgrounds: [UIImage] = []
     @Published var errorMessage: String?
     @Published var showError = false
     
+    private let fileManager = FileManager.default
+    private let documentsPath: String
+    
     private init() {
+        // Get documents directory for storing uploaded images
+        documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
         loadAvailableBackgrounds()
+        loadUserUploadedBackgrounds()
     }
     
     private func loadAvailableBackgrounds() {
@@ -94,6 +117,43 @@ class WallpaperCompositionManager: ObservableObject {
         print("• Available Backgrounds Count: \(availableBackgrounds.count)")
         print("• Background Names: \(availableBackgrounds)")
         print("=== 🔍 DEBUG: Background Loading End ===\n")
+    }
+    
+    private func loadUserUploadedBackgrounds() {
+        let uploadsPath = (documentsPath as NSString).appendingPathComponent("UploadedBackgrounds")
+        
+        // Create directory if it doesn't exist
+        if !fileManager.fileExists(atPath: uploadsPath) {
+            try? fileManager.createDirectory(atPath: uploadsPath, withIntermediateDirectories: true)
+        }
+        
+        // Load existing uploaded images
+        if let files = try? fileManager.contentsOfDirectory(atPath: uploadsPath) {
+            for file in files {
+                let filePath = (uploadsPath as NSString).appendingPathComponent(file)
+                if let image = UIImage(contentsOfFile: filePath) {
+                    userUploadedBackgrounds.append(image)
+                }
+            }
+        }
+    }
+    
+    func addUploadedBackground(_ image: UIImage) {
+        userUploadedBackgrounds.append(image)
+        
+        // Save image to documents directory
+        let uploadsPath = (documentsPath as NSString).appendingPathComponent("UploadedBackgrounds")
+        let fileName = "upload_\(Date().timeIntervalSince1970).jpg"
+        let filePath = (uploadsPath as NSString).appendingPathComponent(fileName)
+        
+        if let data = image.jpegData(compressionQuality: 0.8) {
+            try? data.write(to: URL(fileURLWithPath: filePath))
+        }
+    }
+    
+    func selectUploadedBackground(_ image: UIImage) {
+        backgroundType = .image(image)
+        backgroundTransform.reset()
     }
     
     func selectBackground(named filename: String) {
@@ -172,15 +232,6 @@ class WallpaperCompositionManager: ObservableObject {
     func generateFinalImage(withText textImage: UIImage, device: DeviceConfig) -> UIImage? {
         print("\n=== 🎨 DEBUG: Generating Final Image ===")
         
-        // Debug background state
-        if case .image(let bgImage) = backgroundType {
-            print("✅ Background image exists:")
-            print("   Size: \(bgImage.size)")
-            print("   Scale: \(bgImage.scale)")
-        } else {
-            print("❌ No background image set in backgroundType")
-        }
-        
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         print("📐 Device Resolution: \(device.resolution)")
@@ -190,44 +241,129 @@ class WallpaperCompositionManager: ObservableObject {
             format: format
         )
         
-        let finalImage = renderer.image { context in
-            // Draw background first if available
-            if case .image(let backgroundImage) = backgroundType {
-                print("✅ Drawing background image")
+        return renderer.image { context in
+            switch backgroundType {
+            case .image(let backgroundImage):
+                drawImage(backgroundImage, in: context, size: device.resolution)
                 
-                // Scale background to fill the device resolution while maintaining aspect ratio
-                let bgSize = backgroundImage.size
-                let deviceSize = device.resolution
+            case .solidColor(let color):
+                UIColor(color).setFill()
+                context.fill(CGRect(origin: .zero, size: device.resolution))
                 
-                let widthRatio = deviceSize.width / bgSize.width
-                let heightRatio = deviceSize.height / bgSize.height
-                let scale = max(widthRatio, heightRatio)
+            case .gradient(let config):
+                drawGradient(config, in: context, size: device.resolution)
                 
-                let scaledWidth = bgSize.width * scale
-                let scaledHeight = bgSize.height * scale
+            case .frosted(let config):
+                drawFrostedEffect(config, in: context, size: device.resolution)
                 
-                // Center the background
-                let x = (deviceSize.width - scaledWidth) / 2
-                let y = (deviceSize.height - scaledHeight) / 2
-                
-                print("   Background original size: \(bgSize)")
-                print("   Scaled size: \(scaledWidth) x \(scaledHeight)")
-                print("   Position: (\(x), \(y))")
-                
-                backgroundImage.draw(in: CGRect(x: x, y: y, width: scaledWidth, height: scaledHeight))
-                print("✅ Background drawn successfully")
-            } else {
-                print("ℹ️ No background image, using white background")
+            case .none:
                 UIColor.white.setFill()
                 context.fill(CGRect(origin: .zero, size: device.resolution))
             }
             
             // Draw text image on top
-            print("✅ Drawing text overlay")
             textImage.draw(in: CGRect(origin: .zero, size: device.resolution))
         }
+    }
+    
+    private func drawImage(_ image: UIImage, in context: UIGraphicsImageRendererContext, size: CGSize) {
+        let bgSize = image.size
+        let widthRatio = size.width / bgSize.width
+        let heightRatio = size.height / bgSize.height
+        let scale = max(widthRatio, heightRatio)
         
-        print("📱 Final image size: \(finalImage.size)")
-        return finalImage
+        let scaledWidth = bgSize.width * scale
+        let scaledHeight = bgSize.height * scale
+        let x = (size.width - scaledWidth) / 2
+        let y = (size.height - scaledHeight) / 2
+        
+        image.draw(in: CGRect(x: x, y: y, width: scaledWidth, height: scaledHeight))
+    }
+    
+    private func drawGradient(_ config: GradientConfig, in context: UIGraphicsImageRendererContext, size: CGSize) {
+        let rect = CGRect(origin: .zero, size: size)
+        let context = context.cgContext
+        
+        switch config.direction {
+        case .linear(let angle):
+            let gradient = CGGradient(
+                colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                colors: [UIColor(config.startColor).cgColor, UIColor(config.endColor).cgColor] as CFArray,
+                locations: [0, 1]
+            )!
+            
+            let centerPoint = CGPoint(x: rect.midX, y: rect.midY)
+            let radius = sqrt(pow(size.width, 2) + pow(size.height, 2)) / 2
+            
+            let angleInRadians = CGFloat(angle * .pi / 180)
+            let startPoint = CGPoint(
+                x: centerPoint.x - radius * CoreGraphics.cos(angleInRadians),
+                y: centerPoint.y - radius * CoreGraphics.sin(angleInRadians)
+            )
+            let endPoint = CGPoint(
+                x: centerPoint.x + radius * CoreGraphics.cos(angleInRadians),
+                y: centerPoint.y + radius * CoreGraphics.sin(angleInRadians)
+            )
+            
+            context.drawLinearGradient(
+                gradient,
+                start: startPoint,
+                end: endPoint,
+                options: []
+            )
+            
+        case .radial:
+            let gradient = CGGradient(
+                colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                colors: [UIColor(config.startColor).cgColor, UIColor(config.endColor).cgColor] as CFArray,
+                locations: [0, 1]
+            )!
+            
+            let centerPoint = CGPoint(x: rect.midX, y: rect.midY)
+            let radius = sqrt(pow(size.width, 2) + pow(size.height, 2)) / 2
+            
+            context.drawRadialGradient(
+                gradient,
+                startCenter: centerPoint,
+                startRadius: 0,
+                endCenter: centerPoint,
+                endRadius: radius,
+                options: []
+            )
+        }
+    }
+    
+    private func drawFrostedEffect(_ config: FrostedConfig, in context: UIGraphicsImageRendererContext, size: CGSize) {
+        let rect = CGRect(origin: .zero, size: size)
+        
+        // Draw base color with opacity
+        UIColor(config.baseColor).withAlphaComponent(config.opacity).setFill()
+        context.fill(rect)
+        
+        // Apply blur effect
+        let blur = CIFilter(name: "CIGaussianBlur")!
+        blur.setValue(config.intensity * 20, forKey: kCIInputRadiusKey)
+        
+        if let blurredImage = context.currentImage.applyBlur(intensity: config.intensity) {
+            blurredImage.draw(in: rect)
+        }
+    }
+}
+
+// MARK: - UIImage Extension for Blur
+extension UIImage {
+    func applyBlur(intensity: Double) -> UIImage? {
+        guard let ciImage = CIImage(image: self) else { return nil }
+        
+        let filter = CIFilter(name: "CIGaussianBlur")
+        filter?.setValue(ciImage, forKey: kCIInputImageKey)
+        filter?.setValue(intensity * 20, forKey: kCIInputRadiusKey)
+        
+        guard let outputImage = filter?.outputImage else { return nil }
+        
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else { return nil }
+        
+        return UIImage(cgImage: cgImage)
     }
 } 
