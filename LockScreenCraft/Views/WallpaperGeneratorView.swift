@@ -344,10 +344,10 @@ struct ColorPickerButton: View {
         Button(action: action) {
             Circle()
                 .fill(color)
-                .frame(width: 30, height: 30)
+                .frame(width: 25, height: 15)
                 .overlay(
                     Circle()
-                        .stroke(isSelected ? .blue : .gray, lineWidth: 2)
+                        .stroke(isSelected ? .blue : .gray, lineWidth: 1.5)
                 )
         }
     }
@@ -368,48 +368,84 @@ struct CompactColorPicker: View {
 // MARK: - Text Control Panel
 struct TextControlPanel: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    @State private var selectedSection = 0
     
     var body: some View {
         VStack(spacing: 16) {
-            // Font Picker
-            if !viewModel.availableFonts.isEmpty {
-                Picker("Font", selection: $viewModel.selectedFont) {
-                    ForEach(viewModel.availableFonts, id: \.fontName) { font in
-                        Text(font.displayName)
-                            .tag(font)
+            // Section Picker
+            Picker("Settings Section", selection: $selectedSection) {
+                Text("Text").tag(0)
+                Text("Background").tag(1)
+                Text("Templates").tag(2)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            
+            // Content based on selection
+            switch selectedSection {
+            case 0:
+                TextStyleSection(viewModel: viewModel)
+            case 1:
+                BackgroundSettingsSection()
+            case 2:
+                TemplatesSection()
+            default:
+                EmptyView()
+            }
+        }
+    }
+}
+
+// MARK: - Settings Sections
+struct TextStyleSection: View {
+    @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Font Picker and Size Controls in one row
+            HStack(spacing: 12) {
+                // Font Picker
+                if !viewModel.availableFonts.isEmpty {
+                    Picker("Font", selection: $viewModel.selectedFont) {
+                        ForEach(viewModel.availableFonts, id: \.fontName) { font in
+                            Text(font.displayName)
+                                .tag(font)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                
+                Spacer()
+                
+                // Font Size Controls
+                HStack {
+                    Button(action: { viewModel.decreaseFontSize() }) {
+                        Image(systemName: "minus.circle.fill")
+                            .font(.title2)
+                    }
+                    
+                    TextField("", text: Binding(
+                        get: { String(Int(viewModel.fontSize)) },
+                        set: { viewModel.setFontSizeFromString($0) }
+                    ))
+                        .multilineTextAlignment(.center)
+                        .monospacedDigit()
+                        .frame(width: 50)
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.numberPad)
+                    
+                    Button(action: { viewModel.increaseFontSize() }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
                     }
                 }
-                .pickerStyle(.menu)
+                .foregroundStyle(.primary)
             }
-            
-            // Font Size Controls
-            HStack {
-                Button(action: { viewModel.decreaseFontSize() }) {
-                    Image(systemName: "minus.circle.fill")
-                        .font(.title2)
-                }
-                
-                TextField("", text: Binding(
-                    get: { String(Int(viewModel.fontSize)) },
-                    set: { viewModel.setFontSizeFromString($0) }
-                ))
-                    .multilineTextAlignment(.center)
-                    .monospacedDigit()
-                    .frame(width: 50)
-                    .textFieldStyle(.roundedBorder)
-                    .keyboardType(.numberPad)
-                
-                Button(action: { viewModel.increaseFontSize() }) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                }
-            }
-            .foregroundStyle(.primary)
             
             // Color Selection
             VStack(alignment: .leading, spacing: 8) {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 6) {
                         // Native Color Picker with compact presentation
                         CompactColorPicker(selection: $viewModel.selectedColor)
                         
@@ -437,6 +473,7 @@ struct TextControlPanel: View {
                 }
             }
         }
+        .padding(.horizontal)
     }
     
     private func alignmentIcon(for alignment: NSTextAlignment) -> String {
@@ -446,6 +483,32 @@ struct TextControlPanel: View {
         case .right: return "text.alignright"
         default: return "text.alignleft"
         }
+    }
+}
+
+struct BackgroundSettingsSection: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            ContentUnavailableView {
+                Label("Coming Soon", systemImage: "photo.fill")
+            } description: {
+                Text("Background customization options will be available in a future update.")
+            }
+        }
+        .padding(.horizontal)
+    }
+}
+
+struct TemplatesSection: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            ContentUnavailableView {
+                Label("Coming Soon", systemImage: "square.grid.2x2.fill")
+            } description: {
+                Text("Template and layout options will be available in a future update.")
+            }
+        }
+        .padding(.horizontal)
     }
 }
 
