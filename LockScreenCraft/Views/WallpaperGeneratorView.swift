@@ -699,60 +699,94 @@ struct GalleryBackgroundView: View {
     @ObservedObject private var compositionManager = WallpaperCompositionManager.shared
     @Binding var isProcessing: Bool
     
+    // Make grid more compact with 4 columns
     private let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible())
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8)
     ]
     
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
+        LazyVGrid(columns: columns, spacing: 8) {
             ForEach(compositionManager.availableBackgrounds, id: \.self) { filename in
-                Button(action: {
-                    guard !isProcessing else { return }
-                    isProcessing = true
-                    compositionManager.selectBackground(named: filename)
-                    Task {
-                        await viewModel.generateWallpaper()
-                        isProcessing = false
-                    }
-                }) {
-                    let workspacePath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
-                    if let image = UIImage(contentsOfFile: workspacePath) {
-                        ZStack {
-                            Image(uiImage: image)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(height: 100)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                )
-                            
-                            if isProcessing {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(.ultraThinMaterial)
-                                    .overlay(
-                                        ProgressView()
-                                            .scaleEffect(0.8)
-                                    )
-                            }
+                BackgroundThumbnailView(
+                    filename: filename,
+                    isProcessing: isProcessing,
+                    onSelect: {
+                        guard !isProcessing else { return }
+                        isProcessing = true
+                        compositionManager.selectBackground(named: filename)
+                        Task {
+                            await viewModel.generateWallpaper()
+                            isProcessing = false
                         }
-                    } else {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.gray.opacity(0.1))
-                            .frame(height: 100)
-                            .overlay(
-                                Image(systemName: "photo.fill")
-                                    .foregroundColor(.gray)
-                            )
                     }
-                }
-                .disabled(isProcessing)
+                )
+                .frame(height: 80) // Smaller thumbnail size
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 8)
+    }
+}
+
+// Separate view for thumbnail to improve performance
+struct BackgroundThumbnailView: View {
+    let filename: String
+    let isProcessing: Bool
+    let onSelect: () -> Void
+    
+    @State private var thumbnailImage: UIImage?
+    
+    var body: some View {
+        Button(action: onSelect) {
+            ZStack {
+                if let image = thumbnailImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                } else {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.gray.opacity(0.1))
+                        .overlay(
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        )
+                }
+                
+                if isProcessing {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        )
+                }
+            }
+        }
+        .disabled(isProcessing)
+        .task {
+            await loadThumbnail()
+        }
+    }
+    
+    private func loadThumbnail() async {
+        let workspacePath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
+        guard let originalImage = UIImage(contentsOfFile: workspacePath) else { return }
+        
+        // Create thumbnail on background thread
+        let thumbnail = await Task.detached(priority: .background) {
+            return originalImage.preparingThumbnail(of: CGSize(width: 160, height: 160))
+        }.value
+        
+        await MainActor.run {
+            self.thumbnailImage = thumbnail
+        }
     }
 }
 

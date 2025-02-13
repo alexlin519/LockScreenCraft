@@ -49,12 +49,31 @@ class WallpaperCompositionManager: ObservableObject {
     
     private let fileManager = FileManager.default
     private let documentsPath: String
+    private var imageCache = NSCache<NSString, UIImage>()
     
     private init() {
         // Get documents directory for storing uploaded images
         documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        
+        // Configure image cache
+        imageCache.countLimit = 50 // Maximum number of images to cache
+        imageCache.totalCostLimit = 50 * 1024 * 1024 // 50MB cache limit
+        
         loadAvailableBackgrounds()
         loadUserUploadedBackgrounds()
+    }
+    
+    // Add cache helper methods
+    func getCachedImage(for filename: String) -> UIImage? {
+        return imageCache.object(forKey: filename as NSString)
+    }
+    
+    func cacheImage(_ image: UIImage, for filename: String) {
+        imageCache.setObject(image, forKey: filename as NSString)
+    }
+    
+    func clearCache() {
+        imageCache.removeAllObjects()
     }
     
     private func loadAvailableBackgrounds() {
@@ -138,18 +157,31 @@ class WallpaperCompositionManager: ObservableObject {
     }
     
     func selectBackground(named filename: String) {
-        print("\n=== 🔍 DEBUG: Selecting Background ===")
-        print("📝 Attempting to load background: \(filename)")
+        print("\n=== 🔍 DEBUG: Background Selection Start ===")
+        print("🎯 Selecting background: \(filename)")
         
-        // Try loading from workspace path first
+        // Check cache first
+        if let cachedImage = getCachedImage(for: filename) {
+            print("✅ Found image in cache")
+            self.backgroundType = .image(cachedImage)
+            self.backgroundTransform.reset()
+            return
+        }
+        
+        // If not in cache, load from file
         let workspacePath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
-        print("📂 Trying workspace path: \(workspacePath)")
+        print("\n📂 Trying workspace path: \(workspacePath)")
+        
         if let image = UIImage(contentsOfFile: workspacePath) {
-            print("✅ Successfully loaded image from workspace path")
+            print("✅ Successfully loaded image from workspace")
             print("   Image size: \(image.size)")
             print("   Image scale: \(image.scale)")
+            
+            // Cache the loaded image
+            cacheImage(image, for: filename)
+            
             self.backgroundType = .image(image)
-            print("✅ Background type set to image")
+            self.backgroundTransform.reset()
             return
         }
         
