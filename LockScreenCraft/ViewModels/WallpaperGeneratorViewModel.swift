@@ -78,32 +78,50 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
     }
     
-    init() {
-        self.selectedDevice = DeviceConfig.iPhone12ProMax
-        // Initialize with system font
-        self.selectedFont = FontDisplayInfo(fontName: "System Font", displayName: "系统字体")
-        
-        // Initialize fonts
-        print("🚀 Initializing WallpaperGeneratorViewModel")
-        fontManager.registerFonts()
-        updateAvailableFonts()
-    }
-    
-    private func updateAvailableFonts() {
-        print("🔄 Updating available fonts")
-        isLoadingFonts = true
-        
-        // Get all fonts
-        availableFonts = fontManager.getAllAvailableFonts()
-        print("📚 Found \(availableFonts.count) fonts")
-        
-        isLoadingFonts = false
-    }
-    
     // MARK: - Font Size Methods
+    private var fontSizeDebounceTimer: Timer?
+    @Published private(set) var fontSizeText: String = "300" {
+        didSet {
+            // Cancel any existing timer
+            fontSizeDebounceTimer?.invalidate()
+            
+            // Only validate after user stops typing for 0.5 seconds
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                if let size = Double(self.fontSizeText) {
+                    await self.validateAndSetFontSize(size)
+                } else {
+                    // Reset to previous valid value if input is not a number
+                    self.fontSizeText = String(Int(self.fontSize))
+                    self.showError(message: "Please enter a valid number")
+                }
+            }
+        }
+    }
+    
+    func updateFontSizeText(_ newText: String) {
+        fontSizeText = newText
+    }
+    
+    private func validateAndSetFontSize(_ size: Double) async {
+        if size > maxFontSize {
+            fontSize = maxFontSize
+            fontSizeText = String(Int(maxFontSize))
+            showError(message: "Font size cannot exceed \(Int(maxFontSize))")
+        } else if size < minFontSize {
+            fontSize = minFontSize
+            fontSizeText = String(Int(minFontSize))
+            showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
+        } else {
+            fontSize = size.rounded()
+            updateWallpaperWithDebounce()
+        }
+    }
+    
     func increaseFontSize() {
         if fontSize < maxFontSize {
             fontSize += 1.0
+            fontSizeText = String(Int(fontSize))
             updateWallpaperWithDebounce()
         } else {
             showError(message: "Font size cannot exceed \(Int(maxFontSize))")
@@ -113,30 +131,10 @@ class WallpaperGeneratorViewModel: ObservableObject {
     func decreaseFontSize() {
         if fontSize > minFontSize {
             fontSize -= 1.0
+            fontSizeText = String(Int(fontSize))
             updateWallpaperWithDebounce()
         } else {
             showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
-        }
-    }
-    
-    func setFontSize(_ size: Double) {
-        if size > maxFontSize {
-            showError(message: "Font size cannot exceed \(Int(maxFontSize))")
-            fontSize = maxFontSize
-        } else if size < minFontSize {
-            showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
-            fontSize = minFontSize
-        } else {
-            fontSize = size.rounded()
-        }
-        updateWallpaperWithDebounce()
-    }
-    
-    func setFontSizeFromString(_ sizeString: String) {
-        if let size = Double(sizeString) {
-            setFontSize(size)
-        } else {
-            showError(message: "Please enter a valid number")
         }
     }
     
@@ -318,5 +316,26 @@ class WallpaperGeneratorViewModel: ObservableObject {
     private func showError(message: String) {
         errorMessage = message
         showError = true
+    }
+    
+    init() {
+        self.selectedDevice = DeviceConfig.iPhone12ProMax
+        self.selectedFont = FontDisplayInfo(fontName: "System Font", displayName: "系统字体")
+        
+        // Initialize fonts
+        print("🚀 Initializing WallpaperGeneratorViewModel")
+        fontManager.registerFonts()
+        updateAvailableFonts()
+    }
+    
+    private func updateAvailableFonts() {
+        print("🔄 Updating available fonts")
+        isLoadingFonts = true
+        
+        // Get all fonts
+        availableFonts = fontManager.getAllAvailableFonts()
+        print("📚 Found \(availableFonts.count) fonts")
+        
+        isLoadingFonts = false
     }
 } 

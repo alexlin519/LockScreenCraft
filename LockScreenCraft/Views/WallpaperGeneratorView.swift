@@ -619,8 +619,8 @@ struct TextStyleSection: View {
                     }
                     
                     TextField("", text: Binding(
-                        get: { String(Int(viewModel.fontSize)) },
-                        set: { viewModel.setFontSizeFromString($0) }
+                        get: { viewModel.fontSizeText },
+                        set: { viewModel.updateFontSizeText($0) }
                     ))
                         .multilineTextAlignment(.center)
                         .monospacedDigit()
