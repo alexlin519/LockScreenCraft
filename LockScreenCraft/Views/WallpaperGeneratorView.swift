@@ -117,8 +117,8 @@ struct AdjustTabView: View {
 struct AdjustmentView: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
     @ObservedObject private var compositionManager = WallpaperCompositionManager.shared
-    @Binding var isPresented: Bool
-    
+    @Binding var isPresented: Bool  x
+     
     // Gesture State
     @State private var scale: CGFloat = 1.0
     @State private var offset = CGSize.zero
