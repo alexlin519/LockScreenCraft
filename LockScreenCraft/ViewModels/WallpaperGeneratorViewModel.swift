@@ -37,6 +37,16 @@ class WallpaperGeneratorViewModel: ObservableObject {
     @Published var fontSize: Double = 300.0   // Default font size
     @Published var textAlignment: NSTextAlignment = .center
     @Published var isLoadingFonts: Bool = false
+    @Published var lineSpacing: Double = 0.0 {  // Default line spacing
+        didSet {
+            updateWallpaperWithDebounce()
+        }
+    }
+    @Published var wordSpacing: Double = 0.0 {  // Default word spacing
+        didSet {
+            updateWallpaperWithDebounce()
+        }
+    }
     @Published var selectedColor: Color = .black {
         didSet {
             updateWallpaperWithDebounce()
@@ -182,13 +192,15 @@ class WallpaperGeneratorViewModel: ObservableObject {
         // Use FontManager to get the correct font
         let font = fontManager.getFont(name: selectedFont.fontName, size: CGFloat(fontSize))
         
-        // Generate the text image
+        // Generate the text image with spacing parameters
         let textImage = textRenderer.renderText(
             processedText,
             font: font,
             color: UIColor(selectedColor),
             device: selectedDevice,
-            alignment: textAlignment
+            alignment: textAlignment,
+            lineSpacing: CGFloat(lineSpacing),
+            wordSpacing: CGFloat(wordSpacing)
         )
         
         // Generate the final composite image

@@ -666,6 +666,31 @@ struct TextStyleSection: View {
                 .foregroundStyle(.primary)
             }
             
+            // Spacing Controls
+            VStack(spacing: 12) {
+                // Line Spacing
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Line Spacing")
+                        Spacer()
+                        Text("\(Int(viewModel.lineSpacing))")
+                            .foregroundColor(.secondary)
+                    }
+                    Slider(value: $viewModel.lineSpacing, in: -200...200, step: 1)
+                }
+                
+                // Word Spacing
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Word Spacing")
+                        Spacer()
+                        Text("\(Int(viewModel.wordSpacing))")
+                            .foregroundColor(.secondary)
+                    }
+                    Slider(value: $viewModel.wordSpacing, in: -100...100, step: 1)
+                }
+            }
+            
             // Color Selection
             VStack(alignment: .leading, spacing: 8) {
                 ScrollView(.horizontal, showsIndicators: false) {
