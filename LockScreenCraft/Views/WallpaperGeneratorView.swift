@@ -614,6 +614,18 @@ struct TextStyleSection: View {
     
     var body: some View {
         VStack(spacing: 16) {
+            // Randomize button
+            Button(action: {
+                viewModel.randomizeAll()
+                Task {
+                    await viewModel.generateWallpaper()
+                }
+            }) {
+                Label("Randomize Style", systemImage: "dice.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            
             // Font Picker and Size Controls in one row
             HStack(spacing: 12) {
                 // Font Picker
@@ -675,11 +687,11 @@ struct TextStyleSection: View {
                 }
             }
                 
-                // Text Alignment Controls
-                HStack {
+            // Text Alignment Controls
+            HStack {
                 ForEach([NSTextAlignment.left, .center, .right], id: \.self) { alignment in
-                            Button(action: { viewModel.setTextAlignment(alignment) }) {
-                                Image(systemName: alignmentIcon(for: alignment))
+                    Button(action: { viewModel.setTextAlignment(alignment) }) {
+                        Image(systemName: alignmentIcon(for: alignment))
                             .foregroundColor(viewModel.textAlignment == alignment ? .accentColor : .primary)
                     }
                 }

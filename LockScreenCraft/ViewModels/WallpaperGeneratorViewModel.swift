@@ -335,6 +335,37 @@ class WallpaperGeneratorViewModel: ObservableObject {
         showError = true
     }
     
+    // MARK: - Randomization Methods
+    func randomizeAll() {
+        randomizeFont()
+        randomizeColor()
+        randomizeBackground()
+    }
+    
+    private func randomizeFont() {
+        guard !availableFonts.isEmpty else { return }
+        let randomFont = availableFonts.randomElement()!
+        selectedFont = randomFont
+    }
+    
+    private func randomizeColor() {
+        // Define a range of vibrant colors
+        let colors: [Color] = [
+            .black, .blue, .red, .green, .purple, .orange,
+            .pink, .indigo, .mint, .teal, .cyan, .brown
+        ]
+        selectedColor = colors.randomElement()!
+    }
+    
+    private func randomizeBackground() {
+        let compositionManager = WallpaperCompositionManager.shared
+        
+        // Only select from available background images
+        if let randomImage = compositionManager.availableBackgrounds.randomElement() {
+            compositionManager.selectBackground(named: randomImage)
+        }
+    }
+    
     init() {
         self.selectedDevice = DeviceConfig.iPhone12ProMax
         self.selectedFont = FontDisplayInfo(fontName: "System Font", displayName: "系统字体")
@@ -343,6 +374,30 @@ class WallpaperGeneratorViewModel: ObservableObject {
         print("🚀 Initializing WallpaperGeneratorViewModel")
         fontManager.registerFonts()
         updateAvailableFonts()
+        
+        // Create necessary directories
+        createRequiredDirectories()
+    }
+    
+    private func createRequiredDirectories() {
+        let fileManager = FileManager.default
+        let projectPath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources"
+        let directories = [
+            projectPath + "/Input_text",
+            projectPath + "/WallpaperGenerated"
+        ]
+        
+        for directory in directories {
+            if !fileManager.fileExists(atPath: directory) {
+                do {
+                    try fileManager.createDirectory(atPath: directory,
+                                                 withIntermediateDirectories: true)
+                    print("📁 Created directory: \(directory)")
+                } catch {
+                    print("❌ Failed to create directory \(directory): \(error.localizedDescription)")
+                }
+            }
+        }
     }
     
     private func updateAvailableFonts() {
