@@ -222,8 +222,10 @@ class WallpaperGeneratorViewModel: ObservableObject {
     
     // MARK: - Development Helpers
     #if DEBUG
-    func loadTextFromFile() async {
-        print("📖 Loading text from file")
+    @Published var availableTextFiles: [String] = []
+    
+    func loadAvailableTextFiles() async {
+        print("📖 Loading available text files")
         let fileManager = FileManager.default
         let projectPath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources"
         let inputPath = projectPath + "/Input_text"
@@ -234,23 +236,38 @@ class WallpaperGeneratorViewModel: ObservableObject {
                 try fileManager.createDirectory(atPath: inputPath,
                                              withIntermediateDirectories: true)
                 print("📁 Created Input_text directory")
-                showError(message: "Please place your text file in Resources/Input_text folder")
+                showError(message: "Please place your text files in Resources/Input_text folder")
                 return
             }
             
             // Get all .txt files in the directory
             let files = try fileManager.contentsOfDirectory(atPath: inputPath)
                 .filter { $0.hasSuffix(".txt") }
+                .sorted()
             
-            guard let firstFile = files.first else {
-                print("❌ No .txt files found in Input_text directory")
-                showError(message: "No .txt files found in Input_text folder")
-                return
+            await MainActor.run {
+                self.availableTextFiles = files
             }
             
-            let filePath = (inputPath as NSString).appendingPathComponent(firstFile)
-            print("📄 Found text file: \(firstFile)")
-            
+            if files.isEmpty {
+                print("❌ No .txt files found in Input_text directory")
+                showError(message: "No .txt files found in Input_text folder")
+            } else {
+                print("📄 Found \(files.count) text files")
+            }
+        } catch {
+            print("❌ Failed to read directory: \(error.localizedDescription)")
+            showError(message: "Failed to read text files directory")
+        }
+    }
+    
+    func loadTextFromFile(_ filename: String) async {
+        print("📖 Loading text from file: \(filename)")
+        let projectPath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources"
+        let inputPath = projectPath + "/Input_text"
+        let filePath = (inputPath as NSString).appendingPathComponent(filename)
+        
+        do {
             // Read the file content
             let content = try String(contentsOfFile: filePath, encoding: .utf8)
             print("✅ Successfully read text from file")
@@ -260,7 +277,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
                 self.inputText = content.trimmingCharacters(in: .whitespacesAndNewlines)
             }
             
-            showError(message: "Text loaded from \(firstFile)")
+            showError(message: "Text loaded from \(filename)")
         } catch {
             print("❌ Failed to read text file: \(error.localizedDescription)")
             showError(message: "Failed to read text file: \(error.localizedDescription)")

@@ -349,6 +349,7 @@ struct DeviceSelectionSection: View {
 struct ActionButtonsSection: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
     @Binding var selectedTab: Int
+    @State private var showingTextFileMenu = false
     
     var body: some View {
         VStack(spacing: 16) {
@@ -367,13 +368,30 @@ struct ActionButtonsSection: View {
             // Development-only button to read text from file
             Button(action: {
                 Task {
-                    await viewModel.loadTextFromFile()
+                    await viewModel.loadAvailableTextFiles()
+                    showingTextFileMenu = true
                 }
             }) {
                 Label("Load Text from File", systemImage: "doc.text.fill")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
+            .confirmationDialog(
+                "Select Text File",
+                isPresented: $showingTextFileMenu,
+                titleVisibility: .visible
+            ) {
+                ForEach(viewModel.availableTextFiles, id: \.self) { filename in
+                    Button(filename) {
+                        Task {
+                            await viewModel.loadTextFromFile(filename)
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Choose a text file to load")
+            }
             #endif
             
             Button(action: {}) {
