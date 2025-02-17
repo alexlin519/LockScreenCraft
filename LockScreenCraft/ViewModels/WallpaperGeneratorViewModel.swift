@@ -180,11 +180,6 @@ class WallpaperGeneratorViewModel: ObservableObject {
             .replacingOccurrences(of: "\\\\", with: "\n")
             .replacingOccurrences(of: "\\", with: "\n")
             .replacingOccurrences(of: "//", with: "\n")
-            
-        guard processedText.count <= 200 else {
-            showError(message: "Text must be 200 characters or less")
-            return
-        }
         
         isGenerating = true
         print("🔤 Using font: \(selectedFont.fontName) with size: \(fontSize)")

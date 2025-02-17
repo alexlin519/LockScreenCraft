@@ -310,7 +310,7 @@ struct TextInputSection: View {
             Text("Enter Text")
                 .font(.headline)
             
-            TextField("输入文字(最多200字)", text: $inputText, axis: .vertical)
+            TextField("输入文字", text: $inputText, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .frame(height: 200)
                 .lineLimit(5...)
