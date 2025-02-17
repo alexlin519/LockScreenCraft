@@ -29,7 +29,7 @@ struct DeviceConfig: Hashable {
     static let iPhone12ProMax = DeviceConfig(
         modelName: "iPhone 12 Pro Max",
         resolution: CGSize(width: 1284, height: 2778),
-        safeArea: UIEdgeInsets(top: 200, left: 5, bottom: 150, right: 5)
+        safeArea: UIEdgeInsets(top:  660, left: 5, bottom: 325, right: 5)
     )
 }
 
