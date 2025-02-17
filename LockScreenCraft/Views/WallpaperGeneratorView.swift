@@ -669,25 +669,21 @@ struct TextStyleSection: View {
             // Spacing Controls
             VStack(spacing: 12) {
                 // Line Spacing
-                VStack(alignment: .leading) {
-                    HStack {
-                        Text("Line Spacing")
-                        Spacer()
-                        Text("\(Int(viewModel.lineSpacing))")
-                            .foregroundColor(.secondary)
-                    }
+                HStack {
+                    Text("Line Space")
                     Slider(value: $viewModel.lineSpacing, in: -200...200, step: 1)
+                    Text("\(Int(viewModel.lineSpacing))")
+                        .foregroundColor(.secondary)
+                        .frame(width: 40)
                 }
                 
                 // Word Spacing
-                VStack(alignment: .leading) {
-                    HStack {
-                        Text("Word Spacing")
-                        Spacer()
-                        Text("\(Int(viewModel.wordSpacing))")
-                            .foregroundColor(.secondary)
-                    }
+                HStack {
+                    Text("Word Space")
                     Slider(value: $viewModel.wordSpacing, in: -100...100, step: 1)
+                    Text("\(Int(viewModel.wordSpacing))")
+                        .foregroundColor(.secondary)
+                        .frame(width: 40)
                 }
             }
             
