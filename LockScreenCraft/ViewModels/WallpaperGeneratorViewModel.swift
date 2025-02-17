@@ -206,6 +206,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
         isGenerating = false
     }
     
+    // MARK: - Wallpaper Saving
     func saveWallpaper() async {
         guard let image = generatedImage else {
             showError(message: "No wallpaper generated")
@@ -220,6 +221,99 @@ class WallpaperGeneratorViewModel: ObservableObject {
             showError(message: "Failed to save wallpaper")
         }
     }
+    
+    // MARK: - Development Helpers
+    #if DEBUG
+    func loadTextFromFile() async {
+        print("📖 Loading text from file")
+        let fileManager = FileManager.default
+        let projectPath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources"
+        let inputPath = projectPath + "/Input_text"
+        
+        do {
+            // Create Input_text directory if it doesn't exist
+            if !fileManager.fileExists(atPath: inputPath) {
+                try fileManager.createDirectory(atPath: inputPath,
+                                             withIntermediateDirectories: true)
+                print("📁 Created Input_text directory")
+                showError(message: "Please place your text file in Resources/Input_text folder")
+                return
+            }
+            
+            // Get all .txt files in the directory
+            let files = try fileManager.contentsOfDirectory(atPath: inputPath)
+                .filter { $0.hasSuffix(".txt") }
+            
+            guard let firstFile = files.first else {
+                print("❌ No .txt files found in Input_text directory")
+                showError(message: "No .txt files found in Input_text folder")
+                return
+            }
+            
+            let filePath = (inputPath as NSString).appendingPathComponent(firstFile)
+            print("📄 Found text file: \(firstFile)")
+            
+            // Read the file content
+            let content = try String(contentsOfFile: filePath, encoding: .utf8)
+            print("✅ Successfully read text from file")
+            
+            // Update the input text on the main thread
+            await MainActor.run {
+                self.inputText = content.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            showError(message: "Text loaded from \(firstFile)")
+        } catch {
+            print("❌ Failed to read text file: \(error.localizedDescription)")
+            showError(message: "Failed to read text file: \(error.localizedDescription)")
+        }
+    }
+    
+    func saveWallpaperToDesktop() async {
+        print("💾 Saving wallpaper to Resources folder")
+        guard let image = generatedImage else {
+            showError(message: "No wallpaper generated")
+            return
+        }
+        
+        let fileManager = FileManager.default
+        // Get the project's Resources directory path
+        let projectPath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources"
+        let wallpaperPath = projectPath + "/WallpaperGenerated"
+        
+        // Create a filename-safe timestamp
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = dateFormatter.string(from: Date())
+        let deviceName = selectedDevice.modelName.replacingOccurrences(of: " ", with: "_")
+        let filename = "Wallpaper_\(deviceName)_\(timestamp).png"
+        
+        // Create URL for the save location
+        let fileURL = URL(fileURLWithPath: wallpaperPath).appendingPathComponent(filename)
+        
+        print("📝 Attempting to save to: \(fileURL.path)")
+        
+        do {
+            if let imageData = image.pngData() {
+                // Create WallpaperGenerated directory if it doesn't exist
+                try fileManager.createDirectory(atPath: wallpaperPath,
+                                             withIntermediateDirectories: true)
+                
+                // Write the file
+                try imageData.write(to: fileURL, options: .atomic)
+                print("✅ Wallpaper saved successfully to: \(fileURL.path)")
+                showError(message: "Wallpaper saved to Resources/WallpaperGenerated") // Use as success message
+            } else {
+                print("❌ Failed to convert image to PNG data")
+                showError(message: "Failed to convert image to PNG")
+            }
+        } catch {
+            print("❌ Failed to save wallpaper: \(error.localizedDescription)")
+            print("🔍 Error details: \(error)")
+            showError(message: "Failed to save wallpaper: \(error.localizedDescription)")
+        }
+    }
+    #endif
     
     private func showError(message: String) {
         errorMessage = message

@@ -60,6 +60,20 @@ struct PreviewTabView: View {
                             Image(systemName: "square.and.arrow.down")
                         }
                     }
+                    
+                    #if DEBUG
+                    // Development-only save to desktop button
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            Task {
+                                await viewModel.saveWallpaperToDesktop()
+                            }
+                        }) {
+                            Image(systemName: "folder.badge.plus")
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    #endif
                 }
             }
             .fullScreenCover(isPresented: $isFullScreenPreview) {
@@ -341,13 +355,26 @@ struct ActionButtonsSection: View {
             Button(action: {
                 Task {
                     await viewModel.generateWallpaper()
-                selectedTab = 1
+                    selectedTab = 1
                 }
             }) {
                 Label("Generate Wallpaper", systemImage: "wand.and.stars")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            
+            #if DEBUG
+            // Development-only button to read text from file
+            Button(action: {
+                Task {
+                    await viewModel.loadTextFromFile()
+                }
+            }) {
+                Label("Load Text from File", systemImage: "doc.text.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            #endif
             
             Button(action: {}) {
                 Label("Import from TXT", systemImage: "doc.text")
