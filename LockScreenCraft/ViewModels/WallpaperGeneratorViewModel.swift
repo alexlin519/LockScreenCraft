@@ -92,25 +92,35 @@ class WallpaperGeneratorViewModel: ObservableObject {
     private var fontSizeDebounceTimer: Timer?
     @Published private(set) var fontSizeText: String = "300" {
         didSet {
-            // Cancel any existing timer
-            fontSizeDebounceTimer?.invalidate()
-            
-            // Only validate after user stops typing for 0.5 seconds
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-                if let size = Double(self.fontSizeText) {
-                    await self.validateAndSetFontSize(size)
-                } else {
-                    // Reset to previous valid value if input is not a number
-                    self.fontSizeText = String(Int(self.fontSize))
-                    self.showError(message: "Please enter a valid number")
+            // Only validate if the text is not empty (user hasn't deleted all characters)
+            if !fontSizeText.isEmpty {
+                // Cancel any existing timer
+                fontSizeDebounceTimer?.invalidate()
+                
+                // Create new timer that fires after user stops typing
+                fontSizeDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+                    guard let self = self else { return }
+                    if let size = Double(self.fontSizeText) {
+                        Task { @MainActor in
+                            await self.validateAndSetFontSize(size)
+                        }
+                    }
                 }
             }
         }
     }
     
     func updateFontSizeText(_ newText: String) {
-        fontSizeText = newText
+        // Allow empty string during deletion
+        if newText.isEmpty {
+            fontSizeText = newText
+            return
+        }
+        
+        // Only accept numeric input
+        if let _ = Double(newText) {
+            fontSizeText = newText
+        }
     }
     
     private func validateAndSetFontSize(_ size: Double) async {
