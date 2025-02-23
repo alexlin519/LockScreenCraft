@@ -234,7 +234,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
     func loadAvailableTextFiles() async {
         print("📖 Loading available text files")
         let fileManager = FileManager.default
-        let projectPath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources"
+        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources"
         let inputPath = projectPath + "/Input_text"
         
         do {
@@ -270,7 +270,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
     
     func loadTextFromFile(_ filename: String) async {
         print("📖 Loading text from file: \(filename)")
-        let projectPath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources"
+        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources"
         let inputPath = projectPath + "/Input_text"
         let filePath = (inputPath as NSString).appendingPathComponent(filename)
         
@@ -291,6 +291,11 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
     }
     
+    private func showSuccess(message: String) {
+        errorMessage = message  // We can use the same message property
+        showError = true       // But maybe rename this property to something like 'showAlert'
+    }
+    
     func saveWallpaperToDesktop() async {
         print("💾 Saving wallpaper to Resources folder")
         guard let image = generatedImage else {
@@ -299,9 +304,9 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
         
         let fileManager = FileManager.default
-        // Get the project's Resources directory path
-        let projectPath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources"
-        let wallpaperPath = projectPath + "/WallpaperGenerated"
+        // Use hardcoded project path for development
+        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft"
+        let wallpaperPath = projectPath + "/Resources/WallpaperGenerated"
         
         // Create a filename-safe timestamp
         let dateFormatter = DateFormatter()
@@ -317,14 +322,12 @@ class WallpaperGeneratorViewModel: ObservableObject {
         
         do {
             if let imageData = image.pngData() {
-                // Create WallpaperGenerated directory if it doesn't exist
                 try fileManager.createDirectory(atPath: wallpaperPath,
                                              withIntermediateDirectories: true)
                 
-                // Write the file
                 try imageData.write(to: fileURL, options: .atomic)
                 print("✅ Wallpaper saved successfully to: \(fileURL.path)")
-                showError(message: "Wallpaper saved to Resources/WallpaperGenerated") // Use as success message
+                showSuccess(message: "Wallpaper saved to Resources/WallpaperGenerated")  // Use showSuccess instead
             } else {
                 print("❌ Failed to convert image to PNG data")
                 showError(message: "Failed to convert image to PNG")
@@ -374,21 +377,34 @@ class WallpaperGeneratorViewModel: ObservableObject {
     }
     
     init() {
+        print("⚙️ Starting ViewModel initialization")
         self.selectedDevice = DeviceConfig.iPhone12ProMax
         self.selectedFont = FontDisplayInfo(fontName: "System Font", displayName: "系统字体")
         
-        // Initialize fonts
         print("🚀 Initializing WallpaperGeneratorViewModel")
         fontManager.registerFonts()
         updateAvailableFonts()
         
-        // Create necessary directories
         createRequiredDirectories()
+        print("✅ ViewModel initialization complete")
     }
     
     private func createRequiredDirectories() {
         let fileManager = FileManager.default
-        let projectPath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources"
+        // Use hardcoded project path for development
+        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources"
+        
+        // First ensure Resources directory exists
+        if !fileManager.fileExists(atPath: projectPath) {
+            do {
+                try fileManager.createDirectory(atPath: projectPath,
+                                             withIntermediateDirectories: true)
+                print("📁 Created Resources directory")
+            } catch {
+                print("❌ Failed to create Resources directory: \(error.localizedDescription)")
+            }
+        }
+        
         let directories = [
             projectPath + "/Input_text",
             projectPath + "/WallpaperGenerated"

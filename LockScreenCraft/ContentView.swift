@@ -9,17 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        WallpaperGeneratorView()  // Update this to show our main view
     }
 }
 
-#Preview {
+#Preview("Content View") {
     ContentView()
 }
 

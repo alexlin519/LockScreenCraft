@@ -265,7 +265,9 @@ struct WallpaperGeneratorView: View {
     @State private var thumbnailScale: CGFloat = 1.0
     
     var body: some View {
-        TabView(selection: $selectedTab) {
+        print("📱 WallpaperGeneratorView body is rendering")
+        
+        return TabView(selection: $selectedTab) {
             GenerationTabView(viewModel: viewModel, selectedTab: $selectedTab)
                 .tabItem {
                     Label("Generate", systemImage: "text.word.spacing")
@@ -288,7 +290,11 @@ struct WallpaperGeneratorView: View {
                 }
                 .tag(2)
         }
-        .alert("Error", isPresented: $viewModel.showError) {
+        .onAppear {
+            print("🚀 WallpaperGeneratorView appeared")
+        }
+        .alert(viewModel.errorMessage?.starts(with: "Wallpaper saved") == true ? "Success" : "Error", 
+               isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage ?? "An unknown error occurred")
