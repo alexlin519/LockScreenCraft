@@ -1103,7 +1103,7 @@ struct UploadBackgroundView: View {
                     Image(systemName: "plus.circle.fill")
                         .font(.largeTitle)
                     Text("Upload Image")
-                }
+                } 
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color.gray.opacity(0.1))
