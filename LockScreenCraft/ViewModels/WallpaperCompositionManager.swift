@@ -80,7 +80,7 @@ class WallpaperCompositionManager: ObservableObject {
         print("\n=== 🔍 DEBUG: Loading Available Backgrounds ===")
         
         // Try loading directly from the workspace path
-        let workspacePath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources/Background"
+        let workspacePath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources/Background"
         print("\n📂 Checking workspace path: \(workspacePath)")
         
         if FileManager.default.fileExists(atPath: workspacePath) {
@@ -169,7 +169,7 @@ class WallpaperCompositionManager: ObservableObject {
         }
         
         // If not in cache, load from file
-        let workspacePath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
+        let workspacePath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
         print("\n📂 Trying workspace path: \(workspacePath)")
         
         if let image = UIImage(contentsOfFile: workspacePath) {

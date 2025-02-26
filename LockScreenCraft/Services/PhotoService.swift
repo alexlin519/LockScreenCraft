@@ -20,7 +20,7 @@ class PhotoService {
         case .denied, .restricted:
             return false
         @unknown default:
-            return false
+            return false    
         }
     }
     

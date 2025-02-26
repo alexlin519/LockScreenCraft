@@ -12,7 +12,9 @@ class TextRenderer {
         font: UIFont,
         color: UIColor,
         device: DeviceConfig,
-        alignment: NSTextAlignment = .center
+        alignment: NSTextAlignment = .center,
+        lineSpacing: CGFloat = 0.0,
+        wordSpacing: CGFloat = 0.0
     ) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
@@ -38,11 +40,13 @@ class TextRenderer {
             // Setup text attributes
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.alignment = alignment
+            paragraphStyle.lineSpacing = lineSpacing
             
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: optimizedFont,
                 .foregroundColor: color,
-                .paragraphStyle: paragraphStyle
+                .paragraphStyle: paragraphStyle,
+                .kern: wordSpacing // Add word spacing using kerning
             ]
             
             // Calculate text bounds

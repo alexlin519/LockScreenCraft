@@ -29,6 +29,7 @@ struct GenerationTabView: View {
 // MARK: - Preview Tab View
 struct PreviewTabView: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    @Binding var selectedTab: Int
     @Binding var isFullScreenPreview: Bool
     @Binding var thumbnailScale: CGFloat
     
@@ -40,9 +41,11 @@ struct PreviewTabView: View {
                     isFullScreenPreview: $isFullScreenPreview,
                     thumbnailScale: $thumbnailScale
                 )
-                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)  // Reduced from 0.5 to 0.4
+                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
+                .onTapGesture {
+                    isFullScreenPreview = true
+                }
                 
-                // Show text controls regardless of image presence
                 TextControlPanel(viewModel: viewModel)
                     .padding(.horizontal)
                 
@@ -50,16 +53,22 @@ struct PreviewTabView: View {
             }
             .navigationTitle("Preview")
             .toolbar {
-                if viewModel.generatedImage != nil {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            Task {
-                                await viewModel.saveWallpaper()
-                            }
-                        }) {
-                            Image(systemName: "square.and.arrow.down")
-                        }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if let currentFile = viewModel.currentProcessingFile {
+                        Text("\(currentFile) (\(viewModel.currentFileIndex + 1)/\(viewModel.availableTextFiles.count))")
+                            .foregroundStyle(.secondary)
                     }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        Task {
+                            await viewModel.saveAndProcessNext()
+                        }
+                    }) {
+                        Label("Save & Next", systemImage: "arrow.right.circle.fill")
+                    }
+                    .keyboardShortcut("s", modifiers: .command)
                 }
             }
             .fullScreenCover(isPresented: $isFullScreenPreview) {
@@ -251,7 +260,9 @@ struct WallpaperGeneratorView: View {
     @State private var thumbnailScale: CGFloat = 1.0
     
     var body: some View {
-        TabView(selection: $selectedTab) {
+        print("📱 WallpaperGeneratorView body is rendering")
+        
+        return TabView(selection: $selectedTab) {
             GenerationTabView(viewModel: viewModel, selectedTab: $selectedTab)
                 .tabItem {
                     Label("Generate", systemImage: "text.word.spacing")
@@ -260,6 +271,7 @@ struct WallpaperGeneratorView: View {
             
             PreviewTabView(
                 viewModel: viewModel,
+                selectedTab: $selectedTab,
                 isFullScreenPreview: $isFullScreenPreview,
                 thumbnailScale: $thumbnailScale
             )
@@ -274,7 +286,11 @@ struct WallpaperGeneratorView: View {
                 }
                 .tag(2)
         }
-        .alert("Error", isPresented: $viewModel.showError) {
+        .onAppear {
+            print("🚀 WallpaperGeneratorView appeared")
+        }
+        .alert(viewModel.errorMessage?.starts(with: "Wallpaper saved") == true ? "Success" : "Error", 
+               isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage ?? "An unknown error occurred")
@@ -296,17 +312,25 @@ struct TextInputSection: View {
             Text("Enter Text")
                 .font(.headline)
             
-            TextField("输入文字(最多200字)", text: $inputText, axis: .vertical)
+            TextEditor(text: $inputText)
                 .textFieldStyle(.roundedBorder)
                 .frame(height: 200)
                 .lineLimit(5...)
                 .textInputAutocapitalization(.none)
                 .autocorrectionDisabled()
                 .textContentType(.none)
+                .keyboardShortcut("v", modifiers: .command)
             
             Text("Tip: Use \\ or // or \\\\ to create line breaks")
                 .font(.caption)
                 .foregroundColor(.secondary)
+            
+            // Add a paste button
+            Button("Paste") {
+                if let string = UIPasteboard.general.string {
+                    inputText = string
+                }
+            }
         }
         .padding(.horizontal)
     }
@@ -335,19 +359,33 @@ struct DeviceSelectionSection: View {
 struct ActionButtonsSection: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
     @Binding var selectedTab: Int
+    @State private var showingTextFileMenu = false
     
     var body: some View {
         VStack(spacing: 16) {
             Button(action: {
                 Task {
                     await viewModel.generateWallpaper()
-                selectedTab = 1
+                    selectedTab = 1
                 }
             }) {
                 Label("Generate Wallpaper", systemImage: "wand.and.stars")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            
+            #if DEBUG
+            // Changed from "Load Text from File" to "Process All Files"
+            Button(action: {
+                Task {
+                    await viewModel.startProcessingAllFiles()
+                }
+            }) {
+                Label("Process All Files", systemImage: "text.badge.plus")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            #endif
             
             Button(action: {}) {
                 Label("Import from TXT", systemImage: "doc.text")
@@ -563,7 +601,6 @@ struct TextControlPanel: View {
     }
 }
 
-// MARK: - Settings Sections
 struct TextStyleSection: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
     
@@ -582,7 +619,17 @@ struct TextStyleSection: View {
                     .pickerStyle(.menu)
                 }
                 
-                Spacer()
+                // Add Randomize button here
+                Button(action: {
+                    viewModel.randomizeAll()
+                    Task {
+                        await viewModel.generateWallpaper()
+                    }
+                }) {
+                    Label("", systemImage: "dice.fill")
+                        .font(.footnote)
+                }
+                .buttonStyle(.bordered)
                 
                 // Font Size Controls
                 HStack {
@@ -592,21 +639,68 @@ struct TextStyleSection: View {
                     }
                     
                     TextField("", text: Binding(
-                        get: { String(Int(viewModel.fontSize)) },
-                        set: { viewModel.setFontSizeFromString($0) }
+                        get: { viewModel.fontSizeText },
+                        set: { viewModel.updateFontSizeText($0) }
                     ))
                         .multilineTextAlignment(.center)
-                        .monospacedDigit()
-                    .frame(width: 50)
-                    .textFieldStyle(.roundedBorder)
-                        .keyboardType(.numberPad)
-                    
+                        .frame(width: 50)
+                        
                     Button(action: { viewModel.increaseFontSize() }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
                     }
                 }
-                .foregroundStyle(.primary)
+            }
+            
+            // Spacing Controls
+            VStack(spacing: 12) {
+                // Line Spacing
+                HStack {
+                    Text("Line Space")
+                    Slider(value: $viewModel.lineSpacing, in: -200...200, step: 1)
+                        .frame(maxWidth: .infinity)
+                    
+                    // Add number input with +/- buttons
+                    HStack {
+                        Button(action: { viewModel.lineSpacing -= 1 }) {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title3)
+                        }
+                        
+                        Text("\(Int(viewModel.lineSpacing))")
+                            .frame(width: 40)
+                            .monospacedDigit()
+                        
+                        Button(action: { viewModel.lineSpacing += 1 }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
+                        }
+                    }
+                }
+                
+                // Word Spacing
+                HStack {
+                    Text("Word Space")
+                    Slider(value: $viewModel.wordSpacing, in: -100...100, step: 1)
+                        .frame(maxWidth: .infinity)
+                    
+                    // Add number input with +/- buttons
+                    HStack {
+                        Button(action: { viewModel.wordSpacing -= 1 }) {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title3)
+                        }
+                        
+                        Text("\(Int(viewModel.wordSpacing))")
+                            .frame(width: 40)
+                            .monospacedDigit()
+                        
+                        Button(action: { viewModel.wordSpacing += 1 }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
+                        }
+                    }
+                }
             }
             
             // Color Selection
@@ -630,17 +724,16 @@ struct TextStyleSection: View {
                 }
             }
                 
-                // Text Alignment Controls
-                HStack {
+            // Text Alignment Controls
+            HStack {
                 ForEach([NSTextAlignment.left, .center, .right], id: \.self) { alignment in
-                            Button(action: { viewModel.setTextAlignment(alignment) }) {
-                                Image(systemName: alignmentIcon(for: alignment))
+                    Button(action: { viewModel.setTextAlignment(alignment) }) {
+                        Image(systemName: alignmentIcon(for: alignment))
                             .foregroundColor(viewModel.textAlignment == alignment ? .accentColor : .primary)
                     }
                 }
             }
         }
-        .padding(.horizontal)
     }
     
     private func alignmentIcon(for alignment: NSTextAlignment) -> String {
@@ -738,6 +831,21 @@ struct BackgroundThumbnailView: View {
     
     @State private var thumbnailImage: UIImage?
     
+    private func loadThumbnail() async {
+        // Update the path to match our project location
+        let workspacePath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
+        guard let originalImage = UIImage(contentsOfFile: workspacePath) else { return }
+        
+        // Create thumbnail on background thread
+        let thumbnail = await Task.detached(priority: .background) {
+            return originalImage.preparingThumbnail(of: CGSize(width: 160, height: 160))
+        }.value
+        
+        await MainActor.run {
+            self.thumbnailImage = thumbnail
+        }
+    }
+    
     var body: some View {
         Button(action: onSelect) {
             ZStack {
@@ -772,20 +880,6 @@ struct BackgroundThumbnailView: View {
         .disabled(isProcessing)
         .task {
             await loadThumbnail()
-        }
-    }
-    
-    private func loadThumbnail() async {
-        let workspacePath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
-        guard let originalImage = UIImage(contentsOfFile: workspacePath) else { return }
-        
-        // Create thumbnail on background thread
-        let thumbnail = await Task.detached(priority: .background) {
-            return originalImage.preparingThumbnail(of: CGSize(width: 160, height: 160))
-        }.value
-        
-        await MainActor.run {
-            self.thumbnailImage = thumbnail
         }
     }
 }

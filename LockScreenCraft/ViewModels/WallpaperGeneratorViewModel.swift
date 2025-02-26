@@ -30,13 +30,25 @@ class WallpaperGeneratorViewModel: ObservableObject {
     @Published var isGenerating = false
     @Published var errorMessage: String?
     @Published var showError = false
+    @Published var currentProcessingFile: String?
+    @Published var currentFileIndex: Int = 0
     
     // MARK: - Text Styling Properties
     private let maxFontSize: Double = 600.0  // Maximum font size limit
     private let minFontSize: Double = 3.0    // Minimum font size limit
-    @Published var fontSize: Double = 300.0   // Default font size
+    @Published var fontSize: Double = 100.0   // Default font size
     @Published var textAlignment: NSTextAlignment = .center
     @Published var isLoadingFonts: Bool = false
+    @Published var lineSpacing: Double = -20.0 {  // Default line spacing
+        didSet {
+            updateWallpaperWithDebounce()
+        }
+    }
+    @Published var wordSpacing: Double = 0.0 {  // Default word spacing
+        didSet {
+            updateWallpaperWithDebounce()
+        }
+    }
     @Published var selectedColor: Color = .black {
         didSet {
             updateWallpaperWithDebounce()
@@ -78,32 +90,60 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
     }
     
-    init() {
-        self.selectedDevice = DeviceConfig.iPhone12ProMax
-        // Initialize with system font
-        self.selectedFont = FontDisplayInfo(fontName: "System Font", displayName: "系统字体")
-        
-        // Initialize fonts
-        print("🚀 Initializing WallpaperGeneratorViewModel")
-        fontManager.registerFonts()
-        updateAvailableFonts()
-    }
-    
-    private func updateAvailableFonts() {
-        print("🔄 Updating available fonts")
-        isLoadingFonts = true
-        
-        // Get all fonts
-        availableFonts = fontManager.getAllAvailableFonts()
-        print("📚 Found \(availableFonts.count) fonts")
-        
-        isLoadingFonts = false
-    }
-    
     // MARK: - Font Size Methods
+    private var fontSizeDebounceTimer: Timer?
+    @Published private(set) var fontSizeText: String = "300" {
+        didSet {
+            // Only validate if the text is not empty (user hasn't deleted all characters)
+            if !fontSizeText.isEmpty {
+                // Cancel any existing timer
+                fontSizeDebounceTimer?.invalidate()
+                
+                // Create new timer that fires after user stops typing
+                fontSizeDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+                    guard let self = self else { return }
+                    if let size = Double(self.fontSizeText) {
+                        Task { @MainActor in
+                            await self.validateAndSetFontSize(size)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    func updateFontSizeText(_ newText: String) {
+        // Allow empty string during deletion
+        if newText.isEmpty {
+            fontSizeText = newText
+            return
+        }
+        
+        // Only accept numeric input
+        if let _ = Double(newText) {
+            fontSizeText = newText
+        }
+    }
+    
+    private func validateAndSetFontSize(_ size: Double) async {
+        if size > maxFontSize {
+            fontSize = maxFontSize
+            fontSizeText = String(Int(maxFontSize))
+            showError(message: "Font size cannot exceed \(Int(maxFontSize))")
+        } else if size < minFontSize {
+            fontSize = minFontSize
+            fontSizeText = String(Int(minFontSize))
+            showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
+        } else {
+            fontSize = size.rounded()
+            updateWallpaperWithDebounce()
+        }
+    }
+    
     func increaseFontSize() {
         if fontSize < maxFontSize {
             fontSize += 1.0
+            fontSizeText = String(Int(fontSize))
             updateWallpaperWithDebounce()
         } else {
             showError(message: "Font size cannot exceed \(Int(maxFontSize))")
@@ -113,30 +153,10 @@ class WallpaperGeneratorViewModel: ObservableObject {
     func decreaseFontSize() {
         if fontSize > minFontSize {
             fontSize -= 1.0
+            fontSizeText = String(Int(fontSize))
             updateWallpaperWithDebounce()
         } else {
             showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
-        }
-    }
-    
-    func setFontSize(_ size: Double) {
-        if size > maxFontSize {
-            showError(message: "Font size cannot exceed \(Int(maxFontSize))")
-            fontSize = maxFontSize
-        } else if size < minFontSize {
-            showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
-            fontSize = minFontSize
-        } else {
-            fontSize = size.rounded()
-        }
-        updateWallpaperWithDebounce()
-    }
-    
-    func setFontSizeFromString(_ sizeString: String) {
-        if let size = Double(sizeString) {
-            setFontSize(size)
-        } else {
-            showError(message: "Please enter a valid number")
         }
     }
     
@@ -172,11 +192,6 @@ class WallpaperGeneratorViewModel: ObservableObject {
             .replacingOccurrences(of: "\\\\", with: "\n")
             .replacingOccurrences(of: "\\", with: "\n")
             .replacingOccurrences(of: "//", with: "\n")
-            
-        guard processedText.count <= 200 else {
-            showError(message: "Text must be 200 characters or less")
-            return
-        }
         
         isGenerating = true
         print("🔤 Using font: \(selectedFont.fontName) with size: \(fontSize)")
@@ -184,13 +199,15 @@ class WallpaperGeneratorViewModel: ObservableObject {
         // Use FontManager to get the correct font
         let font = fontManager.getFont(name: selectedFont.fontName, size: CGFloat(fontSize))
         
-        // Generate the text image
+        // Generate the text image with spacing parameters
         let textImage = textRenderer.renderText(
             processedText,
             font: font,
             color: UIColor(selectedColor),
             device: selectedDevice,
-            alignment: textAlignment
+            alignment: textAlignment,
+            lineSpacing: CGFloat(lineSpacing),
+            wordSpacing: CGFloat(wordSpacing)
         )
         
         // Generate the final composite image
@@ -206,6 +223,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
         isGenerating = false
     }
     
+    // MARK: - Wallpaper Saving
     func saveWallpaper() async {
         guard let image = generatedImage else {
             showError(message: "No wallpaper generated")
@@ -221,8 +239,298 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Development Helpers
+    #if DEBUG
+    @Published var availableTextFiles: [String] = []
+    
+    func loadAvailableTextFiles() async {
+        print("📖 Loading available text files")
+        let fileManager = FileManager.default
+        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources"
+        let inputPath = projectPath + "/Input_text"
+        
+        do {
+            // Create Input_text directory if it doesn't exist
+            if !fileManager.fileExists(atPath: inputPath) {
+                try fileManager.createDirectory(atPath: inputPath,
+                                             withIntermediateDirectories: true)
+                print("📁 Created Input_text directory")
+                showError(message: "Please place your text files in Resources/Input_text folder")
+                return
+            }
+            
+            // Get all .txt files in the directory
+            let files = try fileManager.contentsOfDirectory(atPath: inputPath)
+                .filter { $0.hasSuffix(".txt") }
+                .sorted()
+            
+            await MainActor.run {
+                self.availableTextFiles = files
+            }
+            
+            if files.isEmpty {
+                print("❌ No .txt files found in Input_text directory")
+                showError(message: "No .txt files found in Input_text folder")
+            } else {
+                print("📄 Found \(files.count) text files")
+            }
+        } catch {
+            print("❌ Failed to read directory: \(error.localizedDescription)")
+            showError(message: "Failed to read text files directory")
+        }
+    }
+    
+    func loadTextFromFile(_ filename: String) async {
+        print("📖 Loading text from file: \(filename)")
+        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources"
+        let inputPath = projectPath + "/Input_text"
+        let filePath = (inputPath as NSString).appendingPathComponent(filename)
+        
+        do {
+            // Read the file content
+            let content = try String(contentsOfFile: filePath, encoding: .utf8)
+            print("✅ Successfully read text from file")
+            
+            // Update the input text on the main thread
+            await MainActor.run {
+                self.inputText = content.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            showError(message: "Text loaded from \(filename)")
+        } catch {
+            print("❌ Failed to read text file: \(error.localizedDescription)")
+            showError(message: "Failed to read text file: \(error.localizedDescription)")
+        }
+    }
+    
+    private func showSuccess(message: String) {
+        errorMessage = message  // We can use the same message property
+        showError = true       // But maybe rename this property to something like 'showAlert'
+    }
+    
+    func saveWallpaperToDesktop() async {
+        print("💾 Saving wallpaper to external folder")
+        guard let image = generatedImage else {
+            showError(message: "No wallpaper generated")
+            return
+        }
+        
+        let fileManager = FileManager.default
+        // Use external output path
+        let outputPath = "/Users/alexlin/Downloads/wallpaper-out-xcode"
+        
+        // Create a filename-safe timestamp
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = dateFormatter.string(from: Date())
+        let deviceName = selectedDevice.modelName.replacingOccurrences(of: " ", with: "_")
+        let filename = "Wallpaper_\(deviceName)_\(timestamp).png"
+        
+        // Create URL for the save location
+        let fileURL = URL(fileURLWithPath: outputPath).appendingPathComponent(filename)
+        
+        print("📝 Attempting to save to: \(fileURL.path)")
+        
+        do {
+            if let imageData = image.pngData() {
+                try fileManager.createDirectory(atPath: outputPath,
+                                             withIntermediateDirectories: true)
+                
+                try imageData.write(to: fileURL, options: .atomic)
+                print("✅ Wallpaper saved successfully to: \(fileURL.path)")
+                showSuccess(message: "Wallpaper saved successfully")
+            } else {
+                print("❌ Failed to convert image to PNG data")
+                showError(message: "Failed to convert image to PNG")
+            }
+        } catch {
+            print("❌ Failed to save wallpaper: \(error.localizedDescription)")
+            print("🔍 Error details: \(error)")
+            showError(message: "Failed to save wallpaper: \(error.localizedDescription)")
+        }
+    }
+    #endif
+    
     private func showError(message: String) {
         errorMessage = message
         showError = true
+    }
+    
+    // MARK: - Randomization Methods
+    func randomizeAll() {
+        randomizeFont()
+        randomizeColor()
+        randomizeBackground()
+    }
+    
+    private func randomizeFont() {
+        guard !availableFonts.isEmpty else { return }
+        let randomFont = availableFonts.randomElement()!
+        selectedFont = randomFont
+    }
+    
+    private func randomizeColor() {
+        // Define a range of vibrant colors
+        let colors: [Color] = [
+            .black, .blue, .red, .green, .purple, .orange,
+            .pink, .indigo, .mint, .teal, .cyan, .brown
+        ]
+        selectedColor = colors.randomElement()!
+    }
+    
+    private func randomizeBackground() {
+        let compositionManager = WallpaperCompositionManager.shared
+        
+        // Only select from available background images
+        if let randomImage = compositionManager.availableBackgrounds.randomElement() {
+            compositionManager.selectBackground(named: randomImage)
+        }
+    }
+    
+    init() {
+        print("⚙️ Starting ViewModel initialization")
+        self.selectedDevice = DeviceConfig.iPhone12ProMax
+        self.selectedFont = FontDisplayInfo(fontName: "System Font", displayName: "系统字体")
+        
+        print("🚀 Initializing WallpaperGeneratorViewModel")
+        fontManager.registerFonts()
+        updateAvailableFonts()
+        
+        createRequiredDirectories()
+        print("✅ ViewModel initialization complete")
+    }
+    
+    private func createRequiredDirectories() {
+        let fileManager = FileManager.default
+        // Use hardcoded project path for development
+        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources"
+        
+        // First ensure Resources directory exists
+        if !fileManager.fileExists(atPath: projectPath) {
+            do {
+                try fileManager.createDirectory(atPath: projectPath,
+                                             withIntermediateDirectories: true)
+                print("📁 Created Resources directory")
+            } catch {
+                print("❌ Failed to create Resources directory: \(error.localizedDescription)")
+            }
+        }
+        
+        let directories = [
+            projectPath + "/Input_text",
+            projectPath + "/WallpaperGenerated"
+        ]
+        
+        for directory in directories {
+            if !fileManager.fileExists(atPath: directory) {
+                do {
+                    try fileManager.createDirectory(atPath: directory,
+                                                 withIntermediateDirectories: true)
+                    print("📁 Created directory: \(directory)")
+                } catch {
+                    print("❌ Failed to create directory \(directory): \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func updateAvailableFonts() {
+        print("🔄 Updating available fonts")
+        isLoadingFonts = true
+        
+        // Get all fonts
+        availableFonts = fontManager.getAllAvailableFonts()
+        print("📚 Found \(availableFonts.count) fonts")
+        
+        isLoadingFonts = false
+    }
+    
+    // Add this struct
+    struct TextFileSettings {
+        let filename: String
+        var fontName: String
+        var fontSize: Double
+        var lineSpacing: Double
+        var wordSpacing: Double
+        var color: Color
+        var backgroundType: BackgroundType
+    }
+    
+    // Add settings storage
+    @Published private var fileSettings: [String: TextFileSettings] = [:]
+    
+    // Save settings when generating wallpaper
+    func saveCurrentSettings(for filename: String) {
+        let settings = TextFileSettings(
+            filename: filename,
+            fontName: selectedFont.fontName,
+            fontSize: fontSize,
+            lineSpacing: lineSpacing,
+            wordSpacing: wordSpacing,
+            color: selectedColor,
+            backgroundType: WallpaperCompositionManager.shared.backgroundType ?? .solidColor(.white) // Provide default
+        )
+        fileSettings[filename] = settings
+    }
+    
+    // Load settings for a file
+    func loadTextAndSettings(_ filename: String) async {
+        await loadTextFromFile(filename)
+        if let settings = fileSettings[filename] {
+            // Restore previous settings
+            selectedFont = FontDisplayInfo(fontName: settings.fontName, displayName: "")
+            fontSize = settings.fontSize
+            lineSpacing = settings.lineSpacing
+            wordSpacing = settings.wordSpacing
+            selectedColor = settings.color
+            WallpaperCompositionManager.shared.backgroundType = settings.backgroundType
+        }
+    }
+    
+    // Add new function to start processing
+    func startProcessingAllFiles() async {
+        // Load all files first
+        await loadAvailableTextFiles()
+        
+        // Start with first file
+        if !availableTextFiles.isEmpty {
+            currentFileIndex = 0
+            currentProcessingFile = availableTextFiles[0]
+            
+            // Load and generate first wallpaper
+            await loadTextFromFile(currentProcessingFile!)
+            await generateWallpaper()
+            
+            // Switch to Preview tab
+            selectedTab = 1
+        }
+    }
+    
+    // Modify existing saveAndProcessNext to handle completion
+    func saveAndProcessNext() async {
+        // 1. Save current wallpaper
+        await saveWallpaperToDesktop()
+        
+        // 2. Move to next file
+        currentFileIndex += 1
+        if currentFileIndex < availableTextFiles.count {
+            // Load next file
+            currentProcessingFile = availableTextFiles[currentFileIndex]
+            await loadTextFromFile(currentProcessingFile!)
+            // Auto generate
+            await generateWallpaper()
+        } else {
+            // All files processed
+            showSuccess(message: "Completed processing all files!")
+            currentProcessingFile = nil
+        }
+    }
+    
+    // Add tab selection
+    @Published var selectedTab: Int = 0
+    
+    // Add function to get settings for a file
+    func getFileSettings(_ filename: String) -> TextFileSettings? {
+        return fileSettings[filename]
     }
 } 
