@@ -36,65 +36,39 @@ struct PreviewTabView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
-                // Current file indicator
-                if let currentFile = viewModel.currentProcessingFile {
-                    Text("\(currentFile) (\(viewModel.currentFileIndex + 1)/\(viewModel.availableTextFiles.count))")
-                        .foregroundStyle(.secondary)
-                }
-                
                 PreviewSection(
                     viewModel: viewModel,
                     isFullScreenPreview: $isFullScreenPreview,
                     thumbnailScale: $thumbnailScale
                 )
-                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)  // Reduced from 0.5 to 0.4
+                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
+                .onTapGesture {
+                    isFullScreenPreview = true
+                }
                 
-                // Show text controls regardless of image presence
                 TextControlPanel(viewModel: viewModel)
                     .padding(.horizontal)
                 
                 Spacer(minLength: 0)
-                
-                // Toolbar with Save & Next button
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            Task {
-                                await viewModel.saveAndProcessNext()
-                            }
-                        }) {
-                            Label("Save & Next", systemImage: "arrow.right.circle.fill")
-                        }
-                        .keyboardShortcut("s", modifiers: .command)
-                    }
-                }
             }
             .navigationTitle("Preview")
             .toolbar {
-                if viewModel.generatedImage != nil {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            Task {
-                                await viewModel.saveWallpaper()
-                            }
-                        }) {
-                            Image(systemName: "square.and.arrow.down")
-                        }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if let currentFile = viewModel.currentProcessingFile {
+                        Text("\(currentFile) (\(viewModel.currentFileIndex + 1)/\(viewModel.availableTextFiles.count))")
+                            .foregroundStyle(.secondary)
                     }
-                    
-                    #if DEBUG
-                    // Development-only save to desktop button
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            Task {
-                                await viewModel.saveWallpaperToDesktop()
-                            }
-                        }) {
-                            Image(systemName: "folder.badge.plus")
-                                .foregroundColor(.blue)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        Task {
+                            await viewModel.saveAndProcessNext()
                         }
+                    }) {
+                        Label("Save & Next", systemImage: "arrow.right.circle.fill")
                     }
-                    #endif
+                    .keyboardShortcut("s", modifiers: .command)
                 }
             }
             .fullScreenCover(isPresented: $isFullScreenPreview) {
@@ -684,18 +658,48 @@ struct TextStyleSection: View {
                 HStack {
                     Text("Line Space")
                     Slider(value: $viewModel.lineSpacing, in: -200...200, step: 1)
-                    Text("\(Int(viewModel.lineSpacing))")
-                        .foregroundColor(.secondary)
-                        .frame(width: 40)
+                        .frame(maxWidth: .infinity)
+                    
+                    // Add number input with +/- buttons
+                    HStack {
+                        Button(action: { viewModel.lineSpacing -= 1 }) {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title3)
+                        }
+                        
+                        Text("\(Int(viewModel.lineSpacing))")
+                            .frame(width: 40)
+                            .monospacedDigit()
+                        
+                        Button(action: { viewModel.lineSpacing += 1 }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
+                        }
+                    }
                 }
                 
                 // Word Spacing
                 HStack {
                     Text("Word Space")
                     Slider(value: $viewModel.wordSpacing, in: -100...100, step: 1)
-                    Text("\(Int(viewModel.wordSpacing))")
-                        .foregroundColor(.secondary)
-                        .frame(width: 40)
+                        .frame(maxWidth: .infinity)
+                    
+                    // Add number input with +/- buttons
+                    HStack {
+                        Button(action: { viewModel.wordSpacing -= 1 }) {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title3)
+                        }
+                        
+                        Text("\(Int(viewModel.wordSpacing))")
+                            .frame(width: 40)
+                            .monospacedDigit()
+                        
+                        Button(action: { viewModel.wordSpacing += 1 }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
+                        }
+                    }
                 }
             }
             
