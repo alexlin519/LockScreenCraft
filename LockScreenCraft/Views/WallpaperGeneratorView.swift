@@ -822,6 +822,21 @@ struct BackgroundThumbnailView: View {
     
     @State private var thumbnailImage: UIImage?
     
+    private func loadThumbnail() async {
+        // Update the path to match our project location
+        let workspacePath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
+        guard let originalImage = UIImage(contentsOfFile: workspacePath) else { return }
+        
+        // Create thumbnail on background thread
+        let thumbnail = await Task.detached(priority: .background) {
+            return originalImage.preparingThumbnail(of: CGSize(width: 160, height: 160))
+        }.value
+        
+        await MainActor.run {
+            self.thumbnailImage = thumbnail
+        }
+    }
+    
     var body: some View {
         Button(action: onSelect) {
             ZStack {
@@ -856,20 +871,6 @@ struct BackgroundThumbnailView: View {
         .disabled(isProcessing)
         .task {
             await loadThumbnail()
-        }
-    }
-    
-    private func loadThumbnail() async {
-        let workspacePath = "/Users/alexlin/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
-        guard let originalImage = UIImage(contentsOfFile: workspacePath) else { return }
-        
-        // Create thumbnail on background thread
-        let thumbnail = await Task.detached(priority: .background) {
-            return originalImage.preparingThumbnail(of: CGSize(width: 160, height: 160))
-        }.value
-        
-        await MainActor.run {
-            self.thumbnailImage = thumbnail
         }
     }
 }

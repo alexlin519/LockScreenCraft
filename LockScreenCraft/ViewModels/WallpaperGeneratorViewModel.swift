@@ -34,10 +34,10 @@ class WallpaperGeneratorViewModel: ObservableObject {
     // MARK: - Text Styling Properties
     private let maxFontSize: Double = 600.0  // Maximum font size limit
     private let minFontSize: Double = 3.0    // Minimum font size limit
-    @Published var fontSize: Double = 300.0   // Default font size
+    @Published var fontSize: Double = 100.0   // Default font size
     @Published var textAlignment: NSTextAlignment = .center
     @Published var isLoadingFonts: Bool = false
-    @Published var lineSpacing: Double = 0.0 {  // Default line spacing
+    @Published var lineSpacing: Double = -20.0 {  // Default line spacing
         didSet {
             updateWallpaperWithDebounce()
         }

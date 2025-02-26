@@ -34,36 +34,6 @@
             endingLineNumber = "445"
             landmarkName = "body"
             landmarkType = "24">
-            <Locations>
-               <Location
-                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - f3768995d3d789d8"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "LockScreenCraft.PreviewSection.body.getter : some"
-                  moduleName = "LockScreenCraft.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "445"
-                  endingLineNumber = "445">
-               </Location>
-               <Location
-                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 20914a9cb697059c"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 () -&gt; SwiftUI._ConditionalContent&lt;&lt;&lt;opaque return type of SwiftUI.View.frame(width: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, height: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0, SwiftUI.ContentUnavailableView&lt;SwiftUI.Label&lt;SwiftUI.Text, SwiftUI.Image&gt;, Swift.Optional&lt;SwiftUI.Text&gt;, SwiftUI.EmptyView&gt;&gt; in LockScreenCraft.PreviewSection.body.getter : some"
-                  moduleName = "LockScreenCraft.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "445"
-                  endingLineNumber = "445">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
