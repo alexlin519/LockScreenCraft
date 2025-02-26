@@ -627,24 +627,11 @@ struct TextControlPanel: View {
     }
 }
 
-// MARK: - Settings Sections
 struct TextStyleSection: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
     
     var body: some View {
         VStack(spacing: 16) {
-            // Randomize button
-            Button(action: {
-                viewModel.randomizeAll()
-                Task {
-                    await viewModel.generateWallpaper()
-                }
-            }) {
-                Label("Randomize Style", systemImage: "dice.fill")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            
             // Font Picker and Size Controls in one row
             HStack(spacing: 12) {
                 // Font Picker
@@ -658,7 +645,17 @@ struct TextStyleSection: View {
                     .pickerStyle(.menu)
                 }
                 
-                Spacer()
+                // Add Randomize button here
+                Button(action: {
+                    viewModel.randomizeAll()
+                    Task {
+                        await viewModel.generateWallpaper()
+                    }
+                }) {
+                    Label("", systemImage: "dice.fill")
+                        .font(.footnote)
+                }
+                .buttonStyle(.bordered)
                 
                 // Font Size Controls
                 HStack {
@@ -672,17 +669,13 @@ struct TextStyleSection: View {
                         set: { viewModel.updateFontSizeText($0) }
                     ))
                         .multilineTextAlignment(.center)
-                        .monospacedDigit()
-                    .frame(width: 50)
-                    .textFieldStyle(.roundedBorder)
-                        .keyboardType(.numberPad)
-                    
+                        .frame(width: 50)
+                        
                     Button(action: { viewModel.increaseFontSize() }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
                     }
                 }
-                .foregroundStyle(.primary)
             }
             
             // Spacing Controls
@@ -737,7 +730,6 @@ struct TextStyleSection: View {
                 }
             }
         }
-        .padding(.horizontal)
     }
     
     private func alignmentIcon(for alignment: NSTextAlignment) -> String {
