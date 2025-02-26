@@ -29,12 +29,19 @@ struct GenerationTabView: View {
 // MARK: - Preview Tab View
 struct PreviewTabView: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    @Binding var selectedTab: Int
     @Binding var isFullScreenPreview: Bool
     @Binding var thumbnailScale: CGFloat
     
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
+                // Current file indicator
+                if let currentFile = viewModel.currentProcessingFile {
+                    Text("\(currentFile) (\(viewModel.currentFileIndex + 1)/\(viewModel.availableTextFiles.count))")
+                        .foregroundStyle(.secondary)
+                }
+                
                 PreviewSection(
                     viewModel: viewModel,
                     isFullScreenPreview: $isFullScreenPreview,
@@ -47,6 +54,20 @@ struct PreviewTabView: View {
                     .padding(.horizontal)
                 
                 Spacer(minLength: 0)
+                
+                // Toolbar with Save & Next button
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            Task {
+                                await viewModel.saveAndProcessNext()
+                            }
+                        }) {
+                            Label("Save & Next", systemImage: "arrow.right.circle.fill")
+                        }
+                        .keyboardShortcut("s", modifiers: .command)
+                    }
+                }
             }
             .navigationTitle("Preview")
             .toolbar {
@@ -276,6 +297,7 @@ struct WallpaperGeneratorView: View {
             
             PreviewTabView(
                 viewModel: viewModel,
+                selectedTab: $selectedTab,
                 isFullScreenPreview: $isFullScreenPreview,
                 thumbnailScale: $thumbnailScale
             )
@@ -316,17 +338,25 @@ struct TextInputSection: View {
             Text("Enter Text")
                 .font(.headline)
             
-            TextField("输入文字", text: $inputText, axis: .vertical)
+            TextEditor(text: $inputText)
                 .textFieldStyle(.roundedBorder)
                 .frame(height: 200)
                 .lineLimit(5...)
                 .textInputAutocapitalization(.none)
                 .autocorrectionDisabled()
                 .textContentType(.none)
+                .keyboardShortcut("v", modifiers: .command)
             
             Text("Tip: Use \\ or // or \\\\ to create line breaks")
                 .font(.caption)
                 .foregroundColor(.secondary)
+            
+            // Add a paste button
+            Button("Paste") {
+                if let string = UIPasteboard.general.string {
+                    inputText = string
+                }
+            }
         }
         .padding(.horizontal)
     }
@@ -371,33 +401,16 @@ struct ActionButtonsSection: View {
             .buttonStyle(.borderedProminent)
             
             #if DEBUG
-            // Development-only button to read text from file
+            // Changed from "Load Text from File" to "Process All Files"
             Button(action: {
                 Task {
-                    await viewModel.loadAvailableTextFiles()
-                    showingTextFileMenu = true
+                    await viewModel.startProcessingAllFiles()
                 }
             }) {
-                Label("Load Text from File", systemImage: "doc.text.fill")
+                Label("Process All Files", systemImage: "text.badge.plus")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-            .confirmationDialog(
-                "Select Text File",
-                isPresented: $showingTextFileMenu,
-                titleVisibility: .visible
-            ) {
-                ForEach(viewModel.availableTextFiles, id: \.self) { filename in
-                    Button(filename) {
-                        Task {
-                            await viewModel.loadTextFromFile(filename)
-                        }
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Choose a text file to load")
-            }
             #endif
             
             Button(action: {}) {

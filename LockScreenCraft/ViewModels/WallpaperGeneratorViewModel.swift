@@ -30,6 +30,8 @@ class WallpaperGeneratorViewModel: ObservableObject {
     @Published var isGenerating = false
     @Published var errorMessage: String?
     @Published var showError = false
+    @Published var currentProcessingFile: String?
+    @Published var currentFileIndex: Int = 0
     
     // MARK: - Text Styling Properties
     private let maxFontSize: Double = 600.0  // Maximum font size limit
@@ -307,16 +309,15 @@ class WallpaperGeneratorViewModel: ObservableObject {
     }
     
     func saveWallpaperToDesktop() async {
-        print("💾 Saving wallpaper to Resources folder")
+        print("💾 Saving wallpaper to external folder")
         guard let image = generatedImage else {
             showError(message: "No wallpaper generated")
             return
         }
         
         let fileManager = FileManager.default
-        // Use hardcoded project path for development
-        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft"
-        let wallpaperPath = projectPath + "/Resources/WallpaperGenerated"
+        // Use external output path
+        let outputPath = "/Users/alexlin/Downloads/wallpaper-out-xcode"
         
         // Create a filename-safe timestamp
         let dateFormatter = DateFormatter()
@@ -326,18 +327,18 @@ class WallpaperGeneratorViewModel: ObservableObject {
         let filename = "Wallpaper_\(deviceName)_\(timestamp).png"
         
         // Create URL for the save location
-        let fileURL = URL(fileURLWithPath: wallpaperPath).appendingPathComponent(filename)
+        let fileURL = URL(fileURLWithPath: outputPath).appendingPathComponent(filename)
         
         print("📝 Attempting to save to: \(fileURL.path)")
         
         do {
             if let imageData = image.pngData() {
-                try fileManager.createDirectory(atPath: wallpaperPath,
+                try fileManager.createDirectory(atPath: outputPath,
                                              withIntermediateDirectories: true)
                 
                 try imageData.write(to: fileURL, options: .atomic)
                 print("✅ Wallpaper saved successfully to: \(fileURL.path)")
-                showSuccess(message: "Wallpaper saved to Resources/WallpaperGenerated")  // Use showSuccess instead
+                showSuccess(message: "Wallpaper saved successfully")
             } else {
                 print("❌ Failed to convert image to PNG data")
                 showError(message: "Failed to convert image to PNG")
@@ -442,5 +443,94 @@ class WallpaperGeneratorViewModel: ObservableObject {
         print("📚 Found \(availableFonts.count) fonts")
         
         isLoadingFonts = false
+    }
+    
+    // Add this struct
+    struct TextFileSettings {
+        let filename: String
+        var fontName: String
+        var fontSize: Double
+        var lineSpacing: Double
+        var wordSpacing: Double
+        var color: Color
+        var backgroundType: BackgroundType
+    }
+    
+    // Add settings storage
+    @Published private var fileSettings: [String: TextFileSettings] = [:]
+    
+    // Save settings when generating wallpaper
+    func saveCurrentSettings(for filename: String) {
+        let settings = TextFileSettings(
+            filename: filename,
+            fontName: selectedFont.fontName,
+            fontSize: fontSize,
+            lineSpacing: lineSpacing,
+            wordSpacing: wordSpacing,
+            color: selectedColor,
+            backgroundType: WallpaperCompositionManager.shared.backgroundType ?? .solidColor(.white) // Provide default
+        )
+        fileSettings[filename] = settings
+    }
+    
+    // Load settings for a file
+    func loadTextAndSettings(_ filename: String) async {
+        await loadTextFromFile(filename)
+        if let settings = fileSettings[filename] {
+            // Restore previous settings
+            selectedFont = FontDisplayInfo(fontName: settings.fontName, displayName: "")
+            fontSize = settings.fontSize
+            lineSpacing = settings.lineSpacing
+            wordSpacing = settings.wordSpacing
+            selectedColor = settings.color
+            WallpaperCompositionManager.shared.backgroundType = settings.backgroundType
+        }
+    }
+    
+    // Add new function to start processing
+    func startProcessingAllFiles() async {
+        // Load all files first
+        await loadAvailableTextFiles()
+        
+        // Start with first file
+        if !availableTextFiles.isEmpty {
+            currentFileIndex = 0
+            currentProcessingFile = availableTextFiles[0]
+            
+            // Load and generate first wallpaper
+            await loadTextFromFile(currentProcessingFile!)
+            await generateWallpaper()
+            
+            // Switch to Preview tab
+            selectedTab = 1
+        }
+    }
+    
+    // Modify existing saveAndProcessNext to handle completion
+    func saveAndProcessNext() async {
+        // 1. Save current wallpaper
+        await saveWallpaperToDesktop()
+        
+        // 2. Move to next file
+        currentFileIndex += 1
+        if currentFileIndex < availableTextFiles.count {
+            // Load next file
+            currentProcessingFile = availableTextFiles[currentFileIndex]
+            await loadTextFromFile(currentProcessingFile!)
+            // Auto generate
+            await generateWallpaper()
+        } else {
+            // All files processed
+            showSuccess(message: "Completed processing all files!")
+            currentProcessingFile = nil
+        }
+    }
+    
+    // Add tab selection
+    @Published var selectedTab: Int = 0
+    
+    // Add function to get settings for a file
+    func getFileSettings(_ filename: String) -> TextFileSettings? {
+        return fileSettings[filename]
     }
 } 
