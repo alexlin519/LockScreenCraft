@@ -205,12 +205,17 @@ struct AdjustmentView: View {
                 
                 // Toolbar overlay
                 VStack {
+                    // Add spacer to push buttons down below status bar
+                    Spacer().frame(height: 55)
+                    
                     HStack {
                         Button(action: {
                             resetTransform()
                         }) {
                             Image(systemName: "arrow.counterclockwise")
-                                .font(.title2)
+                                .font(.headline)
+                                .padding(8)
+                                .background(Circle().fill(Color.black.opacity(0.4)))
                         }
                         
                         Spacer()
@@ -219,7 +224,11 @@ struct AdjustmentView: View {
                             isPresented = false
                         }) {
                             Text("Done")
-                                .font(.headline)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(Color.black.opacity(0.4)))
                         }
                     }
                     .padding()
