@@ -36,18 +36,45 @@ struct PreviewTabView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
-                PreviewSection(
-                    viewModel: viewModel,
-                    isFullScreenPreview: $isFullScreenPreview,
-                    thumbnailScale: $thumbnailScale
-                )
-                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
-                .onTapGesture {
-                    isFullScreenPreview = true
+                // If we have a generated image, show it
+                // If not, show a placeholder instead of trying to generate one
+                if viewModel.generatedImage != nil {
+                    PreviewSection(
+                        viewModel: viewModel,
+                        isFullScreenPreview: $isFullScreenPreview,
+                        thumbnailScale: $thumbnailScale
+                    )
+                    .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
+                    .onTapGesture {
+                        isFullScreenPreview = true
+                    }
+                    
+                    TextControlPanel(viewModel: viewModel)
+                        .padding(.horizontal)
+                } else {
+                    // Show a helpful message when no image exists
+                    VStack(spacing: 25) {
+                        Image(systemName: "photo.badge.plus")
+                            .font(.system(size: 60))
+                            .foregroundColor(.secondary)
+                            
+                        Text("No Preview Available")
+                            .font(.title2)
+                            .fontWeight(.medium)
+                            
+                        Text("Generate a wallpaper first by entering text in the Generate tab")
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.secondary)
+                            
+                        Button("Go to Generate Tab") {
+                            selectedTab = 0
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                
-                TextControlPanel(viewModel: viewModel)
-                    .padding(.horizontal)
                 
                 Spacer(minLength: 0)
             }
@@ -61,22 +88,26 @@ struct PreviewTabView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        Task {
-                            await viewModel.saveAndProcessNext()
+                    if viewModel.generatedImage != nil {
+                        Button(action: {
+                            Task {
+                                await viewModel.saveAndProcessNext()
+                            }
+                        }) {
+                            Label("Save & Next", systemImage: "arrow.right.circle.fill")
                         }
-                    }) {
-                        Label("Save & Next", systemImage: "arrow.right.circle.fill")
+                        .keyboardShortcut("s", modifiers: .command)
                     }
-                    .keyboardShortcut("s", modifiers: .command)
                 }
             }
             .fullScreenCover(isPresented: $isFullScreenPreview) {
-                FullScreenPreview(
-                    image: viewModel.generatedImage,
-                    device: viewModel.selectedDevice,
-                    isPresented: $isFullScreenPreview
-                )
+                if let image = viewModel.generatedImage {
+                    FullScreenPreview(
+                        image: image,
+                        device: viewModel.selectedDevice,
+                        isPresented: $isFullScreenPreview
+                    )
+                }
             }
         }
     }

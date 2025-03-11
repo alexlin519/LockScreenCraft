@@ -32,8 +32,94 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "445"
             endingLineNumber = "445"
-            landmarkName = "body"
-            landmarkType = "24">
+            landmarkName = "PreviewSection"
+            landmarkType = "14">
+            <Locations>
+               <Location
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 20914a9cb697059c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 () -&gt; SwiftUI._ConditionalContent&lt;&lt;&lt;opaque return type of SwiftUI.View.frame(width: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, height: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0, SwiftUI.ContentUnavailableView&lt;SwiftUI.Label&lt;SwiftUI.Text, SwiftUI.Image&gt;, Swift.Optional&lt;SwiftUI.Text&gt;, SwiftUI.EmptyView&gt;&gt; in LockScreenCraft.PreviewSection.body.getter : some"
+                  moduleName = "LockScreenCraft.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "445"
+                  endingLineNumber = "445">
+               </Location>
+               <Location
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 48171be1d1b414b1"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "LockScreenCraft.PreviewSection.thumbnailScale.getter : CoreGraphics.CGFloat"
+                  moduleName = "LockScreenCraft.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 89188ec2a56a0ee0"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "LockScreenCraft.PreviewSection.thumbnailScale.setter : CoreGraphics.CGFloat"
+                  moduleName = "LockScreenCraft.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "445"
+                  endingLineNumber = "445">
+               </Location>
+               <Location
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 22b40d0e2777fa11"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "LockScreenCraft.PreviewSection.thumbnailScale.modify : CoreGraphics.CGFloat"
+                  moduleName = "LockScreenCraft.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "445"
+                  endingLineNumber = "445">
+               </Location>
+               <Location
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - cd4cc7d3b830b805"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "LockScreenCraft.PreviewSection.thumbnailScale.modify : CoreGraphics.CGFloat with unmangled suffix &quot;.resume.0&quot;"
+                  moduleName = "LockScreenCraft.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///%3Ccompiler-generated%3E"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 42c37f4505c9e2a8"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "LockScreenCraft.PreviewSection.$thumbnailScale.getter : SwiftUI.Binding&lt;CoreGraphics.CGFloat&gt;"
+                  moduleName = "LockScreenCraft.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "445"
+                  endingLineNumber = "445">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
