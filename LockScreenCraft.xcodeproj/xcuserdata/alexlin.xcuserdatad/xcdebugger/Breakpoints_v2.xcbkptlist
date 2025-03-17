@@ -32,15 +32,15 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "445"
             endingLineNumber = "445"
-            landmarkName = "PreviewSection"
-            landmarkType = "14">
+            landmarkName = "body"
+            landmarkType = "24">
             <Locations>
                <Location
-                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 20914a9cb697059c"
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 348e554e2d060849"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "closure #1 () -&gt; SwiftUI._ConditionalContent&lt;&lt;&lt;opaque return type of SwiftUI.View.frame(width: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, height: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0, SwiftUI.ContentUnavailableView&lt;SwiftUI.Label&lt;SwiftUI.Text, SwiftUI.Image&gt;, Swift.Optional&lt;SwiftUI.Text&gt;, SwiftUI.EmptyView&gt;&gt; in LockScreenCraft.PreviewSection.body.getter : some"
+                  symbolName = "LockScreenCraft.ActionButtonsSection.body.getter : some"
                   moduleName = "LockScreenCraft.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
@@ -50,25 +50,11 @@
                   endingLineNumber = "445">
                </Location>
                <Location
-                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 48171be1d1b414b1"
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 4505ad55cd373d20"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "LockScreenCraft.PreviewSection.thumbnailScale.getter : CoreGraphics.CGFloat"
-                  moduleName = "LockScreenCraft.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "0"
-                  endingLineNumber = "0">
-               </Location>
-               <Location
-                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 89188ec2a56a0ee0"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "LockScreenCraft.PreviewSection.thumbnailScale.setter : CoreGraphics.CGFloat"
+                  symbolName = "(1) suspend resume partial function for closure #1 () async -&gt; () in closure #3 @Swift.MainActor () -&gt; () in closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.disabled(Swift.Bool) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.disabled(Swift.Bool) -&gt; some&gt;&gt;.0)&gt; in LockScreenCraft.ActionButtonsSection.body.getter : some"
                   moduleName = "LockScreenCraft.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
@@ -78,11 +64,11 @@
                   endingLineNumber = "445">
                </Location>
                <Location
-                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 22b40d0e2777fa11"
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 2b911ffcdd61d625"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "LockScreenCraft.PreviewSection.thumbnailScale.modify : CoreGraphics.CGFloat"
+                  symbolName = "(2) await resume partial function for closure #1 () async -&gt; () in closure #3 @Swift.MainActor () -&gt; () in closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.disabled(Swift.Bool) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.disabled(Swift.Bool) -&gt; some&gt;&gt;.0)&gt; in LockScreenCraft.ActionButtonsSection.body.getter : some"
                   moduleName = "LockScreenCraft.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"
@@ -92,25 +78,11 @@
                   endingLineNumber = "445">
                </Location>
                <Location
-                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - cd4cc7d3b830b805"
+                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 28e91aeffadee126"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "LockScreenCraft.PreviewSection.thumbnailScale.modify : CoreGraphics.CGFloat with unmangled suffix &quot;.resume.0&quot;"
-                  moduleName = "LockScreenCraft.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///%3Ccompiler-generated%3E"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "0"
-                  endingLineNumber = "0">
-               </Location>
-               <Location
-                  uuid = "5975A076-5EAD-440D-922A-C580A94E5244 - 42c37f4505c9e2a8"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "LockScreenCraft.PreviewSection.$thumbnailScale.getter : SwiftUI.Binding&lt;CoreGraphics.CGFloat&gt;"
+                  symbolName = "(3) suspend resume partial function for closure #1 () async -&gt; () in closure #3 @Swift.MainActor () -&gt; () in closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.disabled(Swift.Bool) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.disabled(Swift.Bool) -&gt; some&gt;&gt;.0)&gt; in LockScreenCraft.ActionButtonsSection.body.getter : some"
                   moduleName = "LockScreenCraft.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Views/WallpaperGeneratorView.swift"

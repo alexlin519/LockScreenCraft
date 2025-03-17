@@ -404,15 +404,39 @@ struct ActionButtonsSection: View {
     var body: some View {
         VStack(spacing: 16) {
             Button(action: {
+                // Prevent rapid tapping
+                guard !viewModel.isGenerating else { return }
+                
                 Task {
-                    await viewModel.generateWallpaper()
-                    selectedTab = 1
+                    // Set generating flag manually to prevent UI issues
+                    await MainActor.run { viewModel.isGenerating = true }
+                    
+                    // Generate the wallpaper
+                    do {
+                        await viewModel.generateWallpaper()
+                        
+                        // Ensure we're on the main thread when checking image and switching tabs
+                        await MainActor.run {
+                            // Only switch if we have a valid image
+                            if viewModel.generatedImage != nil {
+                                selectedTab = 1
+                            } else {
+                                print("⚠️ No image generated, not switching tabs")
+                            }
+                            // Make sure to reset generating state
+                            viewModel.isGenerating = false
+                        }
+                    } catch {
+                        print("❌ Generation error: \(error)")
+                        await MainActor.run { viewModel.isGenerating = false }
+                    }
                 }
             }) {
                 Label("Generate Wallpaper", systemImage: "wand.and.stars")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .disabled(viewModel.isGenerating)
             
             #if DEBUG
             // Changed from "Load Text from File" to "Process All Files"
