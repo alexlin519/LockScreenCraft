@@ -91,10 +91,23 @@ struct PreviewTabView: View {
                     if viewModel.generatedImage != nil {
                         Button(action: {
                             Task {
-                                await viewModel.saveAndProcessNext()
+                                await viewModel.saveToPhotos()
+                                
+                                if !viewModel.availableTextFiles.isEmpty {
+                                    let nextIndex = viewModel.currentFileIndex + 1
+                                    if nextIndex < viewModel.availableTextFiles.count {
+                                        await viewModel.selectFileAt(index: nextIndex)
+                                    } else {
+                                        viewModel.currentProcessingFile = nil
+                                    }
+                                }
                             }
                         }) {
-                            Label("Save & Next", systemImage: "arrow.right.circle.fill")
+                            if !viewModel.availableTextFiles.isEmpty {
+                                Label("Save & Next", systemImage: "arrow.right.circle.fill")
+                            } else {
+                                Label("Save", systemImage: "square.and.arrow.down")
+                            }
                         }
                         .keyboardShortcut("s", modifiers: .command)
                     }
@@ -399,66 +412,56 @@ struct DeviceSelectionSection: View {
 struct ActionButtonsSection: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
     @Binding var selectedTab: Int
-    @State private var showingTextFileMenu = false
     
     var body: some View {
         VStack(spacing: 16) {
-            Button(action: {
-                // Prevent rapid tapping
-                guard !viewModel.isGenerating else { return }
-                
+            // Generate Wallpaper button
+            Button {
                 Task {
-                    // Set generating flag manually to prevent UI issues
-                    await MainActor.run { viewModel.isGenerating = true }
-                    
-                    // Generate the wallpaper
-                    do {
-                        await viewModel.generateWallpaper()
-                        
-                        // Ensure we're on the main thread when checking image and switching tabs
-                        await MainActor.run {
-                            // Only switch if we have a valid image
-                            if viewModel.generatedImage != nil {
-                                selectedTab = 1
-                            } else {
-                                print("⚠️ No image generated, not switching tabs")
-                            }
-                            // Make sure to reset generating state
-                            viewModel.isGenerating = false
-                        }
-                    } catch {
-                        print("❌ Generation error: \(error)")
-                        await MainActor.run { viewModel.isGenerating = false }
-                    }
+                    await viewModel.generateWallpaper()
+                    selectedTab = 1 // Switch to preview
                 }
-            }) {
+            } label: {
                 Label("Generate Wallpaper", systemImage: "wand.and.stars")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .disabled(viewModel.isGenerating)
             
-            #if DEBUG
-            // Changed from "Load Text from File" to "Process All Files"
-            Button(action: {
+            // Process Text Files button
+            Button {
                 Task {
                     await viewModel.startProcessingAllFiles()
                 }
-            }) {
-                Label("Process All Files", systemImage: "text.badge.plus")
+            } label: {
+                Label("Process Text Files", systemImage: "doc.text.magnifyingglass")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-            #endif
             
-            Button(action: {}) {
+            // Import from TXT button
+            Button {
+                Task {
+                    viewModel.showingFilePicker = true
+                }
+            } label: {
                 Label("Import from TXT", systemImage: "doc.text")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-            .disabled(true)
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
+        .sheet(isPresented: $viewModel.showingFilePicker) {
+            DocumentPicker(
+                allowedContentTypes: [.plainText],
+                onPick: { urls in
+                    Task {
+                        await viewModel.processSelectedFiles(urls)
+                        selectedTab = 1 // Switch to preview tab
+                    }
+                }
+            )
+        }
     }
 }
 
