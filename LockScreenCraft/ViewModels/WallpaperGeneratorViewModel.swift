@@ -1,6 +1,7 @@
 import SwiftUI
 import Foundation
 import Photos
+import UIKit
 
 #if canImport(UIKit)
 import UIKit
@@ -240,126 +241,6 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Development Helpers
-    #if DEBUG
-    @Published var availableTextFiles: [String] = []
-    
-    func loadAvailableTextFiles() async {
-        print("📖 Loading available text files")
-        let fileManager = FileManager.default
-        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources"
-        let inputPath = projectPath + "/Input_text"
-        
-        do {
-            // Create Input_text directory if it doesn't exist
-            if !fileManager.fileExists(atPath: inputPath) {
-                try fileManager.createDirectory(atPath: inputPath,
-                                             withIntermediateDirectories: true)
-                print("📁 Created Input_text directory")
-                showError(message: "Please place your text files in Resources/Input_text folder")
-                return
-            }
-            
-            // Get all .txt files in the directory
-            let files = try fileManager.contentsOfDirectory(atPath: inputPath)
-                .filter { $0.hasSuffix(".txt") }
-                .sorted()
-            
-            await MainActor.run {
-                self.availableTextFiles = files
-            }
-            
-            if files.isEmpty {
-                print("❌ No .txt files found in Input_text directory")
-                showError(message: "No .txt files found in Input_text folder")
-            } else {
-                print("📄 Found \(files.count) text files")
-            }
-        } catch {
-            print("❌ Failed to read directory: \(error.localizedDescription)")
-            showError(message: "Failed to read text files directory")
-        }
-    }
-    
-    func loadTextFromFile(_ filename: String) async {
-        print("📖 Loading text from file: \(filename)")
-        let projectPath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources"
-        let inputPath = projectPath + "/Input_text"
-        let filePath = (inputPath as NSString).appendingPathComponent(filename)
-        
-        do {
-            // Read the file content
-            let content = try String(contentsOfFile: filePath, encoding: .utf8)
-            print("✅ Successfully read text from file")
-            
-            // Update the input text on the main thread
-            await MainActor.run {
-                self.inputText = content.trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-            
-            showError(message: "Text loaded from \(filename)")
-        } catch {
-            print("❌ Failed to read text file: \(error.localizedDescription)")
-            showError(message: "Failed to read text file: \(error.localizedDescription)")
-        }
-    }
-    
-    private func showSuccess(message: String) {
-        errorMessage = message  // We can use the same message property
-        showError = true       // But maybe rename this property to something like 'showAlert'
-    }
-    
-    func saveWallpaperToDesktop() async -> URL? {
-        print("💾 Saving wallpaper to external folder")
-        guard let image = generatedImage else {
-            showError(message: "No wallpaper generated")
-            return nil
-        }
-        
-        let fileManager = FileManager.default
-        // Use external output path
-        let outputPath = "/Users/alexlin/Downloads/wallpaper-out-xcode"
-        
-        // Create a filename-safe timestamp
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
-        let timestamp = dateFormatter.string(from: Date())
-        let deviceName = selectedDevice.modelName.replacingOccurrences(of: " ", with: "_")
-        let filename = "Wallpaper_\(deviceName)_\(timestamp).png"
-        
-        // Create URL for the save location
-        let fileURL = URL(fileURLWithPath: outputPath).appendingPathComponent(filename)
-        
-        print("📝 Attempting to save to: \(fileURL.path)")
-        
-        do {
-            if let imageData = image.pngData() {
-                try fileManager.createDirectory(atPath: outputPath,
-                                             withIntermediateDirectories: true)
-                
-                try imageData.write(to: fileURL, options: .atomic)
-                print("✅ Wallpaper saved successfully to: \(fileURL.path)")
-                showSuccess(message: "Wallpaper saved successfully")
-                return fileURL
-            } else {
-                print("❌ Failed to convert image to PNG data")
-                showError(message: "Failed to convert image to PNG")
-                return nil
-            }
-        } catch {
-            print("❌ Failed to save wallpaper: \(error.localizedDescription)")
-            print("🔍 Error details: \(error)")
-            showError(message: "Failed to save wallpaper: \(error.localizedDescription)")
-            return nil
-        }
-    }
-    #endif
-    
-    private func showError(message: String) {
-        errorMessage = message
-        showError = true
-    }
-    
     // MARK: - Randomization Methods
     func randomizeAll() {
         randomizeFont()
@@ -491,20 +372,17 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
     }
     
-    // New property for iOS
+    // MARK: - File Processing Properties
+    @Published var availableTextFiles: [String] = []
     @Published var showingFilePicker: Bool = false
-    
-    // Store selected file URLs
     private var selectedFileURLs: [URL] = []
     
     // MARK: - File Processing Methods
     
-    // Show file picker on iOS
     func startProcessingAllFiles() async {
         showingFilePicker = true
     }
     
-    // Process files selected from iOS file picker
     func processSelectedFiles(_ urls: [URL]) async {
         guard !urls.isEmpty else { return }
         
@@ -515,70 +393,76 @@ class WallpaperGeneratorViewModel: ObservableObject {
         currentProcessingFile = availableTextFiles.first
         
         if let firstURL = urls.first {
-            do {
-                let content = try String(contentsOf: firstURL)
-                inputText = content
-                await generateWallpaper()
-            } catch {
-                print("Error loading file: \(error)")
-            }
+            await loadTextFromURL(firstURL)
         }
     }
     
-    // Select a specific file
     func selectFileAt(index: Int) async {
         guard index >= 0, index < selectedFileURLs.count else { return }
         
         currentFileIndex = index
         currentProcessingFile = availableTextFiles[index]
         
-        do {
-            let content = try String(contentsOf: selectedFileURLs[index])
-            inputText = content
-            await generateWallpaper()
-        } catch {
-            print("Error loading file: \(error)")
+        if index < selectedFileURLs.count {
+            await loadTextFromURL(selectedFileURLs[index])
         }
     }
     
-    // Load text from a URL
     func loadTextFromURL(_ url: URL) async {
         do {
             let content = try String(contentsOf: url)
-            await MainActor.run {
-                inputText = content
-            }
+            inputText = content
+            await generateWallpaper()
             print("📄 Loaded text from \(url.lastPathComponent)")
         } catch {
             print("❌ Error loading text: \(error)")
         }
     }
     
-    // Save and move to next file
+    func loadTextFromFile(_ filename: String) async {
+        if let index = availableTextFiles.firstIndex(of: filename),
+           index < selectedFileURLs.count {
+            await loadTextFromURL(selectedFileURLs[index])
+        } else {
+            print("⚠️ Could not find file: \(filename)")
+        }
+    }
+    
     func saveAndProcessNext() async {
-        // Always save to Photos
+        // Save current wallpaper
         await saveToPhotos()
         
-        // Only process next file if we have files
+        // Process next file if available
         if !availableTextFiles.isEmpty {
-            // Move to next file
-            currentFileIndex += 1
-            if currentFileIndex < availableTextFiles.count {
-                currentProcessingFile = availableTextFiles[currentFileIndex]
-                
-                if currentFileIndex < selectedFileURLs.count {
-                    do {
-                        let content = try String(contentsOf: selectedFileURLs[currentFileIndex])
-                        inputText = content
-                        await generateWallpaper()
-                    } catch {
-                        print("Error loading file: \(error)")
-                    }
-                }
+            let nextIndex = currentFileIndex + 1
+            if nextIndex < availableTextFiles.count {
+                await selectFileAt(index: nextIndex)
             } else {
                 currentProcessingFile = nil
             }
         }
+    }
+    
+    // MARK: - Photo Library Methods
+    
+    func saveToPhotos() async {
+        guard let image = generatedImage else {
+            print("❌ No image to save")
+            showError(message: "No image to save")
+            return
+        }
+        
+        // Use the simplest implementation that works reliably
+        UIImageWriteToSavedPhotosAlbum(
+            image,
+            nil,  // No delegate needed for simple implementation
+            nil,  // No callback method
+            nil   // No context info
+        )
+        
+        // Show success message
+        print("✅ Image saved to Photos")
+        showSuccess(message: "Wallpaper saved to Photos")
     }
     
     // MARK: - Image Methods
@@ -586,20 +470,16 @@ class WallpaperGeneratorViewModel: ObservableObject {
     @Published var successMessage: String = ""
     @Published var showSuccess: Bool = false
     
-    func saveToPhotos() async {
-        guard let image = generatedImage else {
-            print("No image to save")
-            showError(message: "No image to save")
-            return
-        }
-        
-        // Actual save implementation with minimal code
-        await MainActor.run {
-            // Most basic implementation possible
-            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-            
-            // Show success message using your existing method
-            showSuccess(message: "Wallpaper saved to Photos")
-        }
+    // Helper method to show error messages
+    private func showError(message: String) {
+        errorMessage = message
+        showError = true
+    }
+
+    // Helper method to show success messages
+    func showSuccess(message: String) {
+        errorMessage = message  // Using errorMessage for both error and success
+        showError = true        // Using showError as a general alert flag
     }
 } 
+

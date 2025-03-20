@@ -1,4 +1,3 @@
-#if DEBUG
 import SwiftUI
 
 struct TextFileListView: View {
@@ -43,5 +42,4 @@ struct TextFileListView: View {
         }
         .navigationTitle("Text Files")
     }
-}
-#endif 
+} 
