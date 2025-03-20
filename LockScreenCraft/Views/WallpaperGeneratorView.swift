@@ -36,18 +36,45 @@ struct PreviewTabView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
-                PreviewSection(
-                    viewModel: viewModel,
-                    isFullScreenPreview: $isFullScreenPreview,
-                    thumbnailScale: $thumbnailScale
-                )
-                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
-                .onTapGesture {
-                    isFullScreenPreview = true
+                // If we have a generated image, show it
+                // If not, show a placeholder instead of trying to generate one
+                if viewModel.generatedImage != nil {
+                    PreviewSection(
+                        viewModel: viewModel,
+                        isFullScreenPreview: $isFullScreenPreview,
+                        thumbnailScale: $thumbnailScale
+                    )
+                    .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
+                    .onTapGesture {
+                        isFullScreenPreview = true
+                    }
+                    
+                    TextControlPanel(viewModel: viewModel)
+                        .padding(.horizontal)
+                } else {
+                    // Show a helpful message when no image exists
+                    VStack(spacing: 25) {
+                        Image(systemName: "photo.badge.plus")
+                            .font(.system(size: 60))
+                            .foregroundColor(.secondary)
+                            
+                        Text("No Preview Available")
+                            .font(.title2)
+                            .fontWeight(.medium)
+                            
+                        Text("Generate a wallpaper first by entering text in the Generate tab")
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.secondary)
+                            
+                        Button("Go to Generate Tab") {
+                            selectedTab = 0
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                
-                TextControlPanel(viewModel: viewModel)
-                    .padding(.horizontal)
                 
                 Spacer(minLength: 0)
             }
@@ -61,22 +88,26 @@ struct PreviewTabView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        Task {
-                            await viewModel.saveAndProcessNext()
+                    if viewModel.generatedImage != nil {
+                        Button(action: {
+                            Task {
+                                await viewModel.saveAndProcessNext()
+                            }
+                        }) {
+                            Label("Save & Next", systemImage: "arrow.right.circle.fill")
                         }
-                    }) {
-                        Label("Save & Next", systemImage: "arrow.right.circle.fill")
+                        .keyboardShortcut("s", modifiers: .command)
                     }
-                    .keyboardShortcut("s", modifiers: .command)
                 }
             }
             .fullScreenCover(isPresented: $isFullScreenPreview) {
-                FullScreenPreview(
-                    image: viewModel.generatedImage,
-                    device: viewModel.selectedDevice,
-                    isPresented: $isFullScreenPreview
-                )
+                if let image = viewModel.generatedImage {
+                    FullScreenPreview(
+                        image: image,
+                        device: viewModel.selectedDevice,
+                        isPresented: $isFullScreenPreview
+                    )
+                }
             }
         }
     }
@@ -205,12 +236,17 @@ struct AdjustmentView: View {
                 
                 // Toolbar overlay
                 VStack {
+                    // Add spacer to push buttons down below status bar
+                    Spacer().frame(height: 55)
+                    
                     HStack {
                         Button(action: {
                             resetTransform()
                         }) {
                             Image(systemName: "arrow.counterclockwise")
-                                .font(.title2)
+                                .font(.headline)
+                                .padding(8)
+                                .background(Circle().fill(Color.black.opacity(0.4)))
                         }
                         
                         Spacer()
@@ -219,7 +255,11 @@ struct AdjustmentView: View {
                             isPresented = false
                         }) {
                             Text("Done")
-                                .font(.headline)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(Color.black.opacity(0.4)))
                         }
                     }
                     .padding()
@@ -364,15 +404,39 @@ struct ActionButtonsSection: View {
     var body: some View {
         VStack(spacing: 16) {
             Button(action: {
+                // Prevent rapid tapping
+                guard !viewModel.isGenerating else { return }
+                
                 Task {
-                    await viewModel.generateWallpaper()
-                    selectedTab = 1
+                    // Set generating flag manually to prevent UI issues
+                    await MainActor.run { viewModel.isGenerating = true }
+                    
+                    // Generate the wallpaper
+                    do {
+                        await viewModel.generateWallpaper()
+                        
+                        // Ensure we're on the main thread when checking image and switching tabs
+                        await MainActor.run {
+                            // Only switch if we have a valid image
+                            if viewModel.generatedImage != nil {
+                                selectedTab = 1
+                            } else {
+                                print("⚠️ No image generated, not switching tabs")
+                            }
+                            // Make sure to reset generating state
+                            viewModel.isGenerating = false
+                        }
+                    } catch {
+                        print("❌ Generation error: \(error)")
+                        await MainActor.run { viewModel.isGenerating = false }
+                    }
                 }
             }) {
                 Label("Generate Wallpaper", systemImage: "wand.and.stars")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .disabled(viewModel.isGenerating)
             
             #if DEBUG
             // Changed from "Load Text from File" to "Process All Files"
@@ -1103,7 +1167,7 @@ struct UploadBackgroundView: View {
                     Image(systemName: "plus.circle.fill")
                         .font(.largeTitle)
                     Text("Upload Image")
-                }
+                } 
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color.gray.opacity(0.1))

@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct LockScreenCraftApp: App {
+    @State private var splashFinished = false
+    
     var body: some Scene {
         WindowGroup {
-            WallpaperGeneratorView()
+            if splashFinished {
+                WallpaperGeneratorView()
+            } else {
+                SplashScreen(isFinished: $splashFinished)
+            }
         }
     }
 }
