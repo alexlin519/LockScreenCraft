@@ -11,10 +11,25 @@ import SwiftUI
 struct LockScreenCraftApp: App {
     @State private var splashFinished = false
     
+    init() {
+        // Set up localization
+        Bundle.setupLocalizationBundle()
+    }
+    
     var body: some Scene {
         WindowGroup {
             if splashFinished {
-                WallpaperGeneratorView()
+                TabView {
+                    WallpaperGeneratorView()
+                        .tabItem {
+                            Label("Wallpaper".localized, systemImage: "photo")
+                        }
+                    
+                    SettingsView()
+                        .tabItem {
+                            Label("Settings".localized, systemImage: "gearshape")
+                        }
+                }
             } else {
                 SplashScreen(isFinished: $splashFinished)
             }

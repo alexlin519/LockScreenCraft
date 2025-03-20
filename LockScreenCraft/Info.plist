@@ -30,5 +30,10 @@
     <string>This app needs access to save wallpapers to your Photos library.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>This app needs access to save wallpapers to your Photos library.</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>zh-Hans</string>
+    </array>
 </dict>
 </plist> 
