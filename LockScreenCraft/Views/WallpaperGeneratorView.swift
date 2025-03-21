@@ -21,8 +21,9 @@ struct GenerationTabView: View {
                 }
                 .padding(.vertical)
             }
-            .navigationTitle("Generate")
+            .navigationTitle("Generate".localized)
         }
+        .id(LocalizationManager.shared.refreshID)
     }
 }
 
@@ -58,15 +59,15 @@ struct PreviewTabView: View {
                             .font(.system(size: 60))
                             .foregroundColor(.secondary)
                             
-                        Text("No Preview Available")
+                        Text("No Preview Available".localized)
                             .font(.title2)
                             .fontWeight(.medium)
                             
-                        Text("Generate a wallpaper first by entering text in the Generate tab")
+                        Text("Generate a wallpaper first by entering text in the Generate tab".localized)
                             .multilineTextAlignment(.center)
                             .foregroundColor(.secondary)
                             
-                        Button("Go to Generate Tab") {
+                        Button("Go to Generate Tab".localized) {
                             selectedTab = 0
                         }
                         .buttonStyle(.borderedProminent)
@@ -78,7 +79,7 @@ struct PreviewTabView: View {
                 
                 Spacer(minLength: 0)
             }
-            .navigationTitle("Preview")
+            .navigationTitle("Preview".localized)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     if let currentFile = viewModel.currentProcessingFile {
@@ -104,9 +105,9 @@ struct PreviewTabView: View {
                             }
                         }) {
                             if !viewModel.availableTextFiles.isEmpty {
-                                Label("Save & Next", systemImage: "arrow.right.circle.fill")
+                                Label("Save & Next".localized, systemImage: "arrow.right.circle.fill")
                             } else {
-                                Label("Save", systemImage: "square.and.arrow.down")
+                                Label("Save".localized, systemImage: "square.and.arrow.down")
                             }
                         }
                         .keyboardShortcut("s", modifiers: .command)
@@ -123,6 +124,7 @@ struct PreviewTabView: View {
                 }
             }
         }
+        .id(LocalizationManager.shared.refreshID)
     }
 }
 
@@ -147,22 +149,23 @@ struct AdjustTabView: View {
                                 .shadow(radius: 5)
                                 .overlay(DeviceFrameOverlay(device: viewModel.selectedDevice))
                             
-                            Label("Tap to Adjust", systemImage: "crop")
+                            Label("Tap to Adjust".localized, systemImage: "crop")
                                 .font(.headline)
                                 .padding(.top)
                         }
                     }
                     .buttonStyle(.plain)
                 } else {
-                    ContentUnavailableView("Generate a wallpaper first", systemImage: "photo")
+                    ContentUnavailableView("Generate a wallpaper first".localized, systemImage: "photo")
                 }
             }
             .padding()
-            .navigationTitle("Adjust")
+            .navigationTitle("Adjust".localized)
             .fullScreenCover(isPresented: $isAdjusting) {
                 AdjustmentView(viewModel: viewModel, isPresented: $isAdjusting)
             }
         }
+        .id(LocalizationManager.shared.refreshID)
     }
 }
 
@@ -311,6 +314,7 @@ struct WallpaperGeneratorView: View {
     @State private var selectedTab = 0
     @State private var isFullScreenPreview = false
     @State private var thumbnailScale: CGFloat = 1.0
+    @StateObject private var localizationManager = LocalizationManager.shared
     
     var body: some View {
         print("📱 WallpaperGeneratorView body is rendering")
@@ -318,7 +322,7 @@ struct WallpaperGeneratorView: View {
         return TabView(selection: $selectedTab) {
             GenerationTabView(viewModel: viewModel, selectedTab: $selectedTab)
                 .tabItem {
-                    Label("Generate", systemImage: "text.word.spacing")
+                    Label("Generate".localized, systemImage: "text.word.spacing")
                 }
                 .tag(0)
             
@@ -329,30 +333,31 @@ struct WallpaperGeneratorView: View {
                 thumbnailScale: $thumbnailScale
             )
             .tabItem {
-                Label("Preview", systemImage: "photo")
+                Label("Preview".localized, systemImage: "photo")
             }
             .tag(1)
             
             AdjustTabView(viewModel: viewModel)
                 .tabItem {
-                    Label("Adjust", systemImage: "crop")
+                    Label("Adjust".localized, systemImage: "crop")
                 }
                 .tag(2)
         }
         .onAppear {
             print("🚀 WallpaperGeneratorView appeared")
         }
-        .alert(viewModel.errorMessage?.starts(with: "Wallpaper saved") == true ? "Success" : "Error", 
+        .alert(viewModel.errorMessage?.starts(with: "Wallpaper saved") == true ? "Success".localized : "Error".localized, 
                isPresented: $viewModel.showError) {
-            Button("OK", role: .cancel) {}
+            Button("OK".localized, role: .cancel) {}
         } message: {
-            Text(viewModel.errorMessage ?? "An unknown error occurred")
+            Text(viewModel.errorMessage ?? "An unknown error occurred".localized)
         }
         .overlay {
             if viewModel.isGenerating {
                 LoadingOverlay()
             }
         }
+        .id(localizationManager.refreshID)
     }
 }
 
@@ -362,7 +367,7 @@ struct TextInputSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Enter Text")
+            Text("Enter Text".localized)
                 .font(.headline)
             
             TextEditor(text: $inputText)
@@ -374,12 +379,12 @@ struct TextInputSection: View {
                 .textContentType(.none)
                 .keyboardShortcut("v", modifiers: .command)
             
-            Text("Tip: Use \\ or // or \\\\ to create line breaks")
+            Text("Tip: Use \\ or // or \\\\ to create line breaks".localized)
                 .font(.caption)
                 .foregroundColor(.secondary)
             
             // Add a paste button
-            Button("Paste") {
+            Button("Paste".localized) {
                 if let string = UIPasteboard.general.string {
                     inputText = string
                 }
@@ -394,10 +399,10 @@ struct DeviceSelectionSection: View {
     
     var body: some View {
         VStack(alignment: .center, spacing: 16) {
-            Text("Select Device")
+            Text("Select Device".localized)
                 .font(.headline)
             
-            Picker("Device", selection: $viewModel.selectedDevice) {
+            Picker("Device".localized, selection: $viewModel.selectedDevice) {
                 ForEach(viewModel.availableDevices, id: \.self) { device in
                     Text(device.modelName)
                         .tag(device)
@@ -422,7 +427,7 @@ struct ActionButtonsSection: View {
                     selectedTab = 1 // Switch to preview
                 }
             } label: {
-                Label("Generate Wallpaper", systemImage: "wand.and.stars")
+                Label("Generate Wallpaper".localized, systemImage: "wand.and.stars")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -434,7 +439,7 @@ struct ActionButtonsSection: View {
                     await viewModel.startProcessingAllFiles()
                 }
             } label: {
-                Label("Process Text Files", systemImage: "doc.text.magnifyingglass")
+                Label("Process Text Files".localized, systemImage: "doc.text.magnifyingglass")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
@@ -445,7 +450,7 @@ struct ActionButtonsSection: View {
                     viewModel.showingFilePicker = true
                 }
             } label: {
-                Label("Import from TXT", systemImage: "doc.text")
+                Label("Import from TXT".localized, systemImage: "doc.text")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
@@ -499,7 +504,7 @@ struct PreviewSection: View {
             }
             .frame(height: 400)
         } else {
-            ContentUnavailableView("No Preview", systemImage: "photo")
+            ContentUnavailableView("No Preview".localized, systemImage: "photo")
             }
         }
     }
@@ -509,12 +514,12 @@ struct FutureSettingsSection: View {
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 4) {
-                Label("Future Settings", systemImage: "gear")
+                Label("Future Settings".localized, systemImage: "gear")
                     .font(.headline)
-                Text("• Font Selection")
-                Text("• Text Size Adjustment")
-                Text("• Background Options")
-                Text("• Text Positioning")
+                Text("• Font Selection".localized)
+                Text("• Text Size Adjustment".localized)
+                Text("• Background Options".localized)
+                Text("• Text Positioning".localized)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
