@@ -5,6 +5,8 @@ class LocalizationManager: ObservableObject {
     static let shared = LocalizationManager()
     
     @Published var currentLanguage: Language
+    // Add refresh trigger to force views to update
+    @Published var refreshID = UUID()
     
     enum Language: String, CaseIterable, Identifiable {
         case english = "en"
@@ -44,8 +46,12 @@ class LocalizationManager: ObservableObject {
     }
     
     func setLanguage(_ language: Language) {
+        print("Setting language to: \(language.rawValue)")
         currentLanguage = language
         applyLanguage(language)
+        
+        // Force UI refresh by updating the refreshID
+        self.refreshID = UUID()
     }
     
     private func applyLanguage(_ language: Language) {
@@ -56,7 +62,16 @@ class LocalizationManager: ObservableObject {
         UserDefaults.standard.set([language.rawValue], forKey: "AppleLanguages")
         UserDefaults.standard.synchronize()
         
+        // Reset the Bundle's language cache
+        BundleLocalization.bundle = nil
+        
         // Post notification for views to refresh
         NotificationCenter.default.post(name: Notification.Name("LanguageChanged"), object: nil)
+    }
+    
+    func debugLocalization(forKey key: String) {
+        let result = key.localized
+        print("Localizing: '\(key)' → '\(result)'")
+        print("Current language: \(currentLanguage.rawValue)")
     }
 } 

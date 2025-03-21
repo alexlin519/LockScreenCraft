@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct LockScreenCraftApp: App {
     @State private var splashFinished = false
+    @StateObject private var localizationManager = LocalizationManager.shared
     
     init() {
         // Set up localization
@@ -30,6 +31,8 @@ struct LockScreenCraftApp: App {
                             Label("Settings".localized, systemImage: "gearshape")
                         }
                 }
+                // Force refresh when language changes
+                .id(localizationManager.refreshID)
             } else {
                 SplashScreen(isFinished: $splashFinished)
             }

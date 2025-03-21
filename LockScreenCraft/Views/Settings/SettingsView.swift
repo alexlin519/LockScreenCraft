@@ -130,5 +130,6 @@ struct SettingsView: View {
             .listStyle(InsetGroupedListStyle())
             .navigationTitle("Settings".localized)
         }
+        .id(localizationManager.refreshID)
     }
 } 
