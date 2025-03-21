@@ -54,4 +54,32 @@
 "System Font" = "System Font";
 "Line Space" = "Line Space";
 "Word Space" = "Word Space";
-"Tip: Use \\ or // or \\\\ to create line breaks" = "Tip: Use \\ or // or \\\\ to create line breaks"; 
+"Tip: Use \\ or // or \\\\ to create line breaks" = "Tip: Use \\ or // or \\\\ to create line breaks";
+
+// Segmented control items
+"Background" = "Background";
+"Templates" = "Templates";
+
+// Font control items
+"System Font" = "System Font";
+
+// Text alignment buttons
+"Left Align" = "Left Align";
+"Center Align" = "Center Align";
+"Right Align" = "Right Align";
+"Justified Align" = "Justified Align";
+
+// Bottom tab items - ensure these match the actual UI
+"生成" = "Generate";
+"预览" = "Preview";
+"调整" = "Adjust";
+"壁纸" = "Wallpaper";
+"设置" = "Settings";
+
+// Any missing buttons in TextControlPanel
+"Font" = "Font";
+"Size" = "Size";
+"Color" = "Color";
+"Alignment" = "Alignment";
+"Line Space" = "Line Space";
+"Word Space" = "Word Space"; 

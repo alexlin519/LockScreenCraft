@@ -651,9 +651,9 @@ struct TextControlPanel: View {
         VStack(spacing: 16) {
             // Section Picker
             Picker("Settings Section", selection: $selectedSection) {
-                Text("Text").tag(0)
-                Text("Background").tag(1)
-                Text("Templates").tag(2)
+                Text("Text".localized).tag(0)
+                Text("Background".localized).tag(1)
+                Text("Templates".localized).tag(2)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
@@ -682,7 +682,7 @@ struct TextStyleSection: View {
             HStack(spacing: 12) {
                 // Font Picker
                 if !viewModel.availableFonts.isEmpty {
-                    Picker("Font", selection: $viewModel.selectedFont) {
+                    Picker("Font".localized, selection: $viewModel.selectedFont) {
                         ForEach(viewModel.availableFonts, id: \.fontName) { font in
                             Text(font.displayName)
                                 .tag(font)

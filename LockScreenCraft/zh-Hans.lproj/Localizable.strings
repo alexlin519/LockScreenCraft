@@ -54,4 +54,33 @@
 "System Font" = "系统字体";
 "Line Space" = "行间距";
 "Word Space" = "字间距";
-"Tip: Use \\ or // or \\\\ to create line breaks" = "提示：使用 \\ 或 // 或 \\\\ 创建换行"; 
+"Tip: Use \\ or // or \\\\ to create line breaks" = "提示：使用 \\ 或 // 或 \\\\ 创建换行";
+
+// Segmented control items
+"Background" = "背景";
+"Templates" = "模板";
+"Text" = "文本";
+
+// Font control items
+"System Font" = "系统字体";
+
+// Text alignment buttons
+"Left Align" = "左对齐";
+"Center Align" = "居中对齐";
+"Right Align" = "右对齐";
+"Justified Align" = "两端对齐";
+
+// Bottom tab items - for consistency
+"生成" = "生成";
+"预览" = "预览";
+"调整" = "调整";
+"壁纸" = "壁纸";
+"设置" = "设置";
+
+// Any missing buttons in TextControlPanel
+"Font" = "字体";
+"Size" = "大小";
+"Color" = "颜色";
+"Alignment" = "对齐";
+"Line Space" = "行间距";
+"Word Space" = "字间距"; 
