@@ -75,7 +75,8 @@
 "调整" = "Adjust";
 "壁纸" = "Wallpaper";
 "设置" = "Settings";
-
+"字间距" = "Word Spacing";
+"行间距" = "Line Spacing";
 // Any missing buttons in TextControlPanel
 "Font" = "Font";
 "Size" = "Size";

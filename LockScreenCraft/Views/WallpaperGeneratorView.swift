@@ -709,7 +709,7 @@ struct TextStyleSection: View {
             VStack(spacing: 12) {
                 // Line Spacing
                 HStack {
-                    Text("Line Space")
+                    Text("Line Space".localized)
                     Slider(value: $viewModel.lineSpacing, in: -200...200, step: 1)
                         .frame(maxWidth: .infinity)
                     
@@ -733,7 +733,7 @@ struct TextStyleSection: View {
                 
                 // Word Spacing
                 HStack {
-                    Text("Word Space")
+                    Text("Word Space".localized)
                     Slider(value: $viewModel.wordSpacing, in: -100...100, step: 1)
                         .frame(maxWidth: .infinity)
                     
