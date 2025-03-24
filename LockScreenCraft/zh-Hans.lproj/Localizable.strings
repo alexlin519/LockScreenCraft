@@ -36,6 +36,7 @@
 "Right" = "右对齐";
 "Justified" = "两端对齐";
 "Process Files" = "处理文件";
+"Process Text Files" = "批量处理文件";
 "Preview" = "预览";
 "Save & Next" = "保存并下一个";
 "Adjust" = "调整";
@@ -55,7 +56,7 @@
 "Line Space" = "行间距";
 "Word Space" = "字间距";
 "Tip: Use \\ or // or \\\\ to create line breaks" = "提示：使用 \\ 或 // 或 \\\\ 创建换行";
-
+"Paste" = "粘贴";
 // Segmented control items
 "Background" = "背景";
 "Templates" = "模板";
@@ -83,4 +84,44 @@
 "Color" = "颜色";
 "Alignment" = "对齐";
 "Line Space" = "行间距";
-"Word Space" = "字间距"; 
+"Word Space" = "字间距";
+
+// Background types
+"Gallery" = "图库";
+"Solid" = "纯色";
+"Gradient" = "渐变";
+"Frosted" = "磨砂";
+"Upload" = "上传";
+"Background Type" = "背景类型";
+
+// Settings section
+"Settings Section" = "设置部分";
+
+// UI Elements
+"Custom Color" = "自定义颜色";
+"Reset" = "重置";
+"Apply" = "应用";
+"Custom" = "自定义";
+"Create your first wallpaper" = "创建你的第一个壁纸";
+"No Wallpapers" = "没有壁纸";
+"Font Settings" = "字体设置";
+"Device Settings" = "设备设置";
+"Warning" = "警告";
+"Are you sure?" = "确定吗？";
+"Confirm" = "确认";
+"Cancel" = "取消";
+"Done" = "完成";
+// Additional missing UI elements
+"Angle: %d°" = "角度: %d°";
+"Blur Intensity: %d%%" = "模糊强度: %d%%";
+"Opacity: %d%%" = "不透明度: %d%%";
+"Upload Image" = "上传图片";
+"Radial Gradient" = "径向渐变";
+"No Preview" = "无预览";
+"Start Color" = "起始颜色";
+"End Color" = "结束颜色";
+"Base Color" = "基本颜色";
+
+// Missing template section strings
+"Coming Soon" = "即将推出";
+"Template and layout options will be available in a future update" = "模板和布局选项将在未来更新中提供"; 

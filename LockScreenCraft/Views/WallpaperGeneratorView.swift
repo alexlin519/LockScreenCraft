@@ -270,7 +270,7 @@ struct AdjustmentView: View {
                         Button(action: {
                             isPresented = false
                         }) {
-                            Text("Done")
+                            Text("Done".localized)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .padding(.horizontal, 12)
@@ -510,24 +510,7 @@ struct PreviewSection: View {
     }
 }
 
-struct FutureSettingsSection: View {
-    var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 4) {
-                Label("Future Settings".localized, systemImage: "gear")
-                    .font(.headline)
-                Text("• Font Selection".localized)
-                Text("• Text Size Adjustment".localized)
-                Text("• Background Options".localized)
-                Text("• Text Positioning".localized)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .foregroundColor(.secondary)
-        }
-        .padding()
-    }
-}
+
 
 struct LoadingOverlay: View {
     var body: some View {
@@ -649,8 +632,8 @@ struct TextControlPanel: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // Section Picker
-            Picker("Settings Section", selection: $selectedSection) {
+            // Section Picker with localized text 
+            Picker("Settings Section".localized, selection: $selectedSection) {
                 Text("Text".localized).tag(0)
                 Text("Background".localized).tag(1)
                 Text("Templates".localized).tag(2)
@@ -826,13 +809,13 @@ struct BackgroundSettingsSection: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // Background Type Selector
-            Picker("Background Type", selection: $selectedBackgroundType) {
-                Text("Gallery").tag(0)
-                Text("Solid").tag(1)
-                Text("Gradient").tag(2)
-                Text("Frosted").tag(3)
-                Text("Upload").tag(4)
+            // Background Type Selector with localized text
+            Picker("Background Type".localized, selection: $selectedBackgroundType) {
+                Text("Gallery".localized).tag(0)
+                Text("Solid".localized).tag(1)
+                Text("Gradient".localized).tag(2)
+                Text("Frosted".localized).tag(3)
+                Text("Upload".localized).tag(4)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
@@ -1001,7 +984,7 @@ struct SolidColorBackgroundView: View {
             }
             
             // Custom Color Picker
-            ColorPicker("Custom Color", selection: $selectedColor)
+            ColorPicker("Custom Color".localized, selection: $selectedColor)
                 .onChange(of: selectedColor) { _, newColor in
                     compositionManager.backgroundType = .solidColor(newColor)
                     Task {
@@ -1065,18 +1048,19 @@ struct GradientBackgroundView: View {
             // Controls
             VStack(alignment: .leading, spacing: 12) {
                 // Gradient Type
-                Toggle("Radial Gradient", isOn: $isRadial)
+                Toggle("Radial Gradient".localized, isOn: $isRadial)
                 
                 // Start Color
-                ColorPicker("Start Color", selection: $startColor)
+                ColorPicker("Start Color".localized, selection: $startColor)
                 
                 // End Color
-                ColorPicker("End Color", selection: $endColor)
+                ColorPicker("End Color".localized, selection: $endColor)
                 
                 // Angle (for linear gradient)
                 if !isRadial {
                     VStack(alignment: .leading) {
-                        Text("Angle: \(Int(angle))°")
+                        Text(String(format: "Angle: %d°".localized, Int(angle)))
+                        
                         Slider(value: $angle, in: 0...360)
                     }
                 }
@@ -1123,17 +1107,17 @@ struct FrostedBackgroundView: View {
             // Controls
             VStack(alignment: .leading, spacing: 12) {
                 // Base Color
-                ColorPicker("Base Color", selection: $baseColor)
+                ColorPicker("Base Color".localized, selection: $baseColor)
                 
                 // Intensity
                 VStack(alignment: .leading) {
-                    Text("Blur Intensity: \(Int(intensity * 100))%")
+                    Text(String(format: "Blur Intensity: %d%%".localized, Int(intensity * 100)))
                     Slider(value: $intensity)
                 }
                 
                 // Opacity
                 VStack(alignment: .leading) {
-                    Text("Opacity: \(Int(opacity * 100))%")
+                    Text(String(format: "Opacity: %d%%".localized, Int(opacity * 100)))
                     Slider(value: $opacity)
                 }
             }
@@ -1174,7 +1158,7 @@ struct UploadBackgroundView: View {
                 VStack {
                     Image(systemName: "plus.circle.fill")
                         .font(.largeTitle)
-                    Text("Upload Image")
+                    Text("Upload Image".localized)
                 } 
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -1223,9 +1207,9 @@ struct TemplatesSection: View {
     var body: some View {
         VStack(spacing: 16) {
             ContentUnavailableView {
-                Label("Coming Soon", systemImage: "square.grid.2x2.fill")
+                Label("Coming Soon".localized, systemImage: "square.grid.2x2.fill")
             } description: {
-                Text("Template and layout options will be available in a future update.")
+                Text("Template and layout options will be available in a future update".localized)
             }
         }
         .padding(.horizontal)
