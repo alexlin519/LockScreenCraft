@@ -1,0 +1,126 @@
+// English Localization
+"Settings" = "Settings";
+"General" = "General";
+"Language" = "Language";
+"Theme" = "Theme";
+"Default Device" = "Default Device";
+"Instructions" = "Instructions";
+"Quick Start Guide" = "Quick Start Guide";
+"Text Formatting Tips" = "Text Formatting Tips";
+"Saving & Sharing" = "Saving & Sharing";
+"Support" = "Support";
+"Report a Bug" = "Report a Bug";
+"Feature Request" = "Feature Request";
+"Contact Developer" = "Contact Developer";
+"About" = "About";
+"App Info" = "App Info";
+"Version History" = "Version History";
+"Credits" = "Credits";
+"Licenses" = "Licenses";
+"Wallpaper" = "Wallpaper";
+"Text" = "Text";
+"Font" = "Font";
+"Color" = "Color";
+"Generate" = "Generate";
+"Save" = "Save";
+"Size" = "Size";
+"Alignment" = "Alignment";
+"Line Spacing" = "Line Spacing";
+"Word Spacing" = "Word Spacing";
+"Enter text..." = "Enter text...";
+"Select Device" = "Select Device";
+"Text Color" = "Text Color";
+"Background Color" = "Background Color";
+"Left" = "Left";
+"Center" = "Center";
+"Right" = "Right";
+"Justified" = "Justified";
+"Process Files" = "Process Files";
+"Preview" = "Preview";
+"Save & Next" = "Save & Next";
+"Adjust" = "Adjust";
+"Import from TXT" = "Import from TXT";
+"No Preview Available" = "No Preview Available";
+"Generate a wallpaper first by entering text in the Generate tab" = "Generate a wallpaper first by entering text in the Generate tab";
+"Go to Generate Tab" = "Go to Generate Tab";
+"Generate Wallpaper" = "Generate Wallpaper";
+"Success" = "Success";
+"Error" = "Error";
+"OK" = "OK";
+"An unknown error occurred" = "An unknown error occurred";
+"Enter Text" = "Enter Text";
+"Tap to Adjust" = "Tap to Adjust";
+"Generate a wallpaper first" = "Generate a wallpaper first";
+"System Font" = "System Font";
+"Line Space" = "Line Space";
+"Word Space" = "Word Space";
+"Tip: Use \\ or // or \\\\ to create line breaks" = "Tip: Use \\ or // or \\\\ to create line breaks";
+
+// Segmented control items
+"Background" = "Background";
+"Templates" = "Templates";
+
+// Font control items
+"System Font" = "System Font";
+
+// Text alignment buttons
+"Left Align" = "Left Align";
+"Center Align" = "Center Align";
+"Right Align" = "Right Align";
+"Justified Align" = "Justified Align";
+
+// Bottom tab items - ensure these match the actual UI
+"生成" = "Generate";
+"预览" = "Preview";
+"调整" = "Adjust";
+"壁纸" = "Wallpaper";
+"设置" = "Settings";
+"字间距" = "Word Spacing";
+"行间距" = "Line Spacing";
+// Any missing buttons in TextControlPanel
+"Font" = "Font";
+"Size" = "Size";
+"Color" = "Color";
+"Alignment" = "Alignment";
+"Line Space" = "Line Space";
+"Word Space" = "Word Space";
+
+// Background types
+"Gallery" = "Gallery";
+"Solid" = "Solid";
+"Gradient" = "Gradient";
+"Frosted" = "Frosted";
+"Upload" = "Upload";
+"Background Type" = "Background Type";
+
+// Settings section
+"Settings Section" = "Settings Section";
+
+// UI Elements
+"Custom Color" = "Custom Color";
+"Reset" = "Reset";
+"Apply" = "Apply";
+"Custom" = "Custom";
+"Create your first wallpaper" = "Create your first wallpaper";
+"No Wallpapers" = "No Wallpapers";
+"Font Settings" = "Font Settings";
+"Device Settings" = "Device Settings";
+"Warning" = "Warning";
+"Are you sure?" = "Are you sure?";
+"Confirm" = "Confirm";
+"Cancel" = "Cancel";
+
+// Additional missing UI elements
+"Angle: %d°" = "Angle: %d°";
+"Blur Intensity: %d%%" = "Blur Intensity: %d%%";
+"Opacity: %d%%" = "Opacity: %d%%";
+"Upload Image" = "Upload Image";
+"Radial Gradient" = "Radial Gradient";
+"No Preview" = "No Preview";
+"Start Color" = "Start Color";
+"End Color" = "End Color";
+"Base Color" = "Base Color";
+
+// Missing template section strings
+"Coming Soon" = "Coming Soon";
+"Template and layout options will be available in a future update" = "Template and layout options will be available in a future update"; 

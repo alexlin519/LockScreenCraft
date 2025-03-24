@@ -21,8 +21,9 @@ struct GenerationTabView: View {
                 }
                 .padding(.vertical)
             }
-            .navigationTitle("Generate")
+            .navigationTitle("Generate".localized)
         }
+        .id(LocalizationManager.shared.refreshID)
     }
 }
 
@@ -58,15 +59,15 @@ struct PreviewTabView: View {
                             .font(.system(size: 60))
                             .foregroundColor(.secondary)
                             
-                        Text("No Preview Available")
+                        Text("No Preview Available".localized)
                             .font(.title2)
                             .fontWeight(.medium)
                             
-                        Text("Generate a wallpaper first by entering text in the Generate tab")
+                        Text("Generate a wallpaper first by entering text in the Generate tab".localized)
                             .multilineTextAlignment(.center)
                             .foregroundColor(.secondary)
                             
-                        Button("Go to Generate Tab") {
+                        Button("Go to Generate Tab".localized) {
                             selectedTab = 0
                         }
                         .buttonStyle(.borderedProminent)
@@ -78,7 +79,7 @@ struct PreviewTabView: View {
                 
                 Spacer(minLength: 0)
             }
-            .navigationTitle("Preview")
+            .navigationTitle("Preview".localized)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     if let currentFile = viewModel.currentProcessingFile {
@@ -104,9 +105,9 @@ struct PreviewTabView: View {
                             }
                         }) {
                             if !viewModel.availableTextFiles.isEmpty {
-                                Label("Save & Next", systemImage: "arrow.right.circle.fill")
+                                Label("Save & Next".localized, systemImage: "arrow.right.circle.fill")
                             } else {
-                                Label("Save", systemImage: "square.and.arrow.down")
+                                Label("Save".localized, systemImage: "square.and.arrow.down")
                             }
                         }
                         .keyboardShortcut("s", modifiers: .command)
@@ -123,6 +124,7 @@ struct PreviewTabView: View {
                 }
             }
         }
+        .id(LocalizationManager.shared.refreshID)
     }
 }
 
@@ -147,22 +149,23 @@ struct AdjustTabView: View {
                                 .shadow(radius: 5)
                                 .overlay(DeviceFrameOverlay(device: viewModel.selectedDevice))
                             
-                            Label("Tap to Adjust", systemImage: "crop")
+                            Label("Tap to Adjust".localized, systemImage: "crop")
                                 .font(.headline)
                                 .padding(.top)
                         }
                     }
                     .buttonStyle(.plain)
                 } else {
-                    ContentUnavailableView("Generate a wallpaper first", systemImage: "photo")
+                    ContentUnavailableView("Generate a wallpaper first".localized, systemImage: "photo")
                 }
             }
             .padding()
-            .navigationTitle("Adjust")
+            .navigationTitle("Adjust".localized)
             .fullScreenCover(isPresented: $isAdjusting) {
                 AdjustmentView(viewModel: viewModel, isPresented: $isAdjusting)
             }
         }
+        .id(LocalizationManager.shared.refreshID)
     }
 }
 
@@ -267,7 +270,7 @@ struct AdjustmentView: View {
                         Button(action: {
                             isPresented = false
                         }) {
-                            Text("Done")
+                            Text("Done".localized)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .padding(.horizontal, 12)
@@ -311,6 +314,7 @@ struct WallpaperGeneratorView: View {
     @State private var selectedTab = 0
     @State private var isFullScreenPreview = false
     @State private var thumbnailScale: CGFloat = 1.0
+    @StateObject private var localizationManager = LocalizationManager.shared
     
     var body: some View {
         print("📱 WallpaperGeneratorView body is rendering")
@@ -318,7 +322,7 @@ struct WallpaperGeneratorView: View {
         return TabView(selection: $selectedTab) {
             GenerationTabView(viewModel: viewModel, selectedTab: $selectedTab)
                 .tabItem {
-                    Label("Generate", systemImage: "text.word.spacing")
+                    Label("Generate".localized, systemImage: "text.word.spacing")
                 }
                 .tag(0)
             
@@ -329,30 +333,31 @@ struct WallpaperGeneratorView: View {
                 thumbnailScale: $thumbnailScale
             )
             .tabItem {
-                Label("Preview", systemImage: "photo")
+                Label("Preview".localized, systemImage: "photo")
             }
             .tag(1)
             
             AdjustTabView(viewModel: viewModel)
                 .tabItem {
-                    Label("Adjust", systemImage: "crop")
+                    Label("Adjust".localized, systemImage: "crop")
                 }
                 .tag(2)
         }
         .onAppear {
             print("🚀 WallpaperGeneratorView appeared")
         }
-        .alert(viewModel.errorMessage?.starts(with: "Wallpaper saved") == true ? "Success" : "Error", 
+        .alert(viewModel.errorMessage?.starts(with: "Wallpaper saved") == true ? "Success".localized : "Error".localized, 
                isPresented: $viewModel.showError) {
-            Button("OK", role: .cancel) {}
+            Button("OK".localized, role: .cancel) {}
         } message: {
-            Text(viewModel.errorMessage ?? "An unknown error occurred")
+            Text(viewModel.errorMessage ?? "An unknown error occurred".localized)
         }
         .overlay {
             if viewModel.isGenerating {
                 LoadingOverlay()
             }
         }
+        .id(localizationManager.refreshID)
     }
 }
 
@@ -362,7 +367,7 @@ struct TextInputSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Enter Text")
+            Text("Enter Text".localized)
                 .font(.headline)
             
             TextEditor(text: $inputText)
@@ -374,12 +379,12 @@ struct TextInputSection: View {
                 .textContentType(.none)
                 .keyboardShortcut("v", modifiers: .command)
             
-            Text("Tip: Use \\ or // or \\\\ to create line breaks")
+            Text("Tip: Use \\ or // or \\\\ to create line breaks".localized)
                 .font(.caption)
                 .foregroundColor(.secondary)
             
             // Add a paste button
-            Button("Paste") {
+            Button("Paste".localized) {
                 if let string = UIPasteboard.general.string {
                     inputText = string
                 }
@@ -394,10 +399,10 @@ struct DeviceSelectionSection: View {
     
     var body: some View {
         VStack(alignment: .center, spacing: 16) {
-            Text("Select Device")
+            Text("Select Device".localized)
                 .font(.headline)
             
-            Picker("Device", selection: $viewModel.selectedDevice) {
+            Picker("Device".localized, selection: $viewModel.selectedDevice) {
                 ForEach(viewModel.availableDevices, id: \.self) { device in
                     Text(device.modelName)
                         .tag(device)
@@ -422,7 +427,7 @@ struct ActionButtonsSection: View {
                     selectedTab = 1 // Switch to preview
                 }
             } label: {
-                Label("Generate Wallpaper", systemImage: "wand.and.stars")
+                Label("Generate Wallpaper".localized, systemImage: "wand.and.stars")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -434,7 +439,7 @@ struct ActionButtonsSection: View {
                     await viewModel.startProcessingAllFiles()
                 }
             } label: {
-                Label("Process Text Files", systemImage: "doc.text.magnifyingglass")
+                Label("Process Text Files".localized, systemImage: "doc.text.magnifyingglass")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
@@ -445,7 +450,7 @@ struct ActionButtonsSection: View {
                     viewModel.showingFilePicker = true
                 }
             } label: {
-                Label("Import from TXT", systemImage: "doc.text")
+                Label("Import from TXT".localized, systemImage: "doc.text")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
@@ -499,28 +504,9 @@ struct PreviewSection: View {
             }
             .frame(height: 400)
         } else {
-            ContentUnavailableView("No Preview", systemImage: "photo")
+            ContentUnavailableView("No Preview".localized, systemImage: "photo")
             }
         }
-    }
-}
-
-struct FutureSettingsSection: View {
-    var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 4) {
-                Label("Future Settings", systemImage: "gear")
-                    .font(.headline)
-                Text("• Font Selection")
-                Text("• Text Size Adjustment")
-                Text("• Background Options")
-                Text("• Text Positioning")
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .foregroundColor(.secondary)
-        }
-        .padding()
     }
 }
 
@@ -644,11 +630,11 @@ struct TextControlPanel: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // Section Picker
-            Picker("Settings Section", selection: $selectedSection) {
-                Text("Text").tag(0)
-                Text("Background").tag(1)
-                Text("Templates").tag(2)
+            // Section Picker with localized text 
+            Picker("Settings Section".localized, selection: $selectedSection) {
+                Text("Text".localized).tag(0)
+                Text("Background".localized).tag(1)
+                Text("Templates".localized).tag(2)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
@@ -677,7 +663,7 @@ struct TextStyleSection: View {
             HStack(spacing: 12) {
                 // Font Picker
                 if !viewModel.availableFonts.isEmpty {
-                    Picker("Font", selection: $viewModel.selectedFont) {
+                    Picker("Font".localized, selection: $viewModel.selectedFont) {
                         ForEach(viewModel.availableFonts, id: \.fontName) { font in
                             Text(font.displayName)
                                 .tag(font)
@@ -723,7 +709,7 @@ struct TextStyleSection: View {
             VStack(spacing: 12) {
                 // Line Spacing
                 HStack {
-                    Text("Line Space")
+                    Text("Line Space".localized)
                     Slider(value: $viewModel.lineSpacing, in: -200...200, step: 1)
                         .frame(maxWidth: .infinity)
                     
@@ -747,7 +733,7 @@ struct TextStyleSection: View {
                 
                 // Word Spacing
                 HStack {
-                    Text("Word Space")
+                    Text("Word Space".localized)
                     Slider(value: $viewModel.wordSpacing, in: -100...100, step: 1)
                         .frame(maxWidth: .infinity)
                     
@@ -821,13 +807,13 @@ struct BackgroundSettingsSection: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // Background Type Selector
-            Picker("Background Type", selection: $selectedBackgroundType) {
-                Text("Gallery").tag(0)
-                Text("Solid").tag(1)
-                Text("Gradient").tag(2)
-                Text("Frosted").tag(3)
-                Text("Upload").tag(4)
+            // Background Type Selector with localized text
+            Picker("Background Type".localized, selection: $selectedBackgroundType) {
+                Text("Gallery".localized).tag(0)
+                Text("Solid".localized).tag(1)
+                Text("Gradient".localized).tag(2)
+                Text("Frosted".localized).tag(3)
+                Text("Upload".localized).tag(4)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
@@ -836,7 +822,7 @@ struct BackgroundSettingsSection: View {
             ScrollView {
                 switch selectedBackgroundType {
                 case 0:
-                    GalleryBackgroundView(viewModel: viewModel, isProcessing: $isProcessing)
+                    GalleryBackgroundView(viewModel: viewModel)
                 case 1:
                     SolidColorBackgroundView(viewModel: viewModel)
                 case 2:
@@ -857,96 +843,102 @@ struct BackgroundSettingsSection: View {
 struct GalleryBackgroundView: View {
     @ObservedObject var viewModel: WallpaperGeneratorViewModel
     @ObservedObject private var compositionManager = WallpaperCompositionManager.shared
-    @Binding var isProcessing: Bool
+    @State private var loadedImages: [String: UIImage] = [:]
+    @State private var isLoading = true
     
-    // Make grid more compact with 4 columns
     private let columns = [
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8)
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible())
     ]
     
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(compositionManager.availableBackgrounds, id: \.self) { filename in
-                BackgroundThumbnailView(
-                    filename: filename,
-                    isProcessing: isProcessing,
-                    onSelect: {
-                        guard !isProcessing else { return }
-                        isProcessing = true
-                        compositionManager.selectBackground(named: filename)
-                        Task {
-                            await viewModel.generateWallpaper()
-                            isProcessing = false
+        ZStack {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(compositionManager.availableBackgrounds, id: \.self) { filename in
+                        Button(action: {
+                            compositionManager.selectBackground(named: filename)
+                            Task {
+                                await viewModel.generateWallpaper()
+                            }
+                        }) {
+                            if let image = loadedImages[filename] {
+                                // Show loaded image
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(height: 100)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    )
+                            } else {
+                                // Placeholder while loading
+                                Rectangle()
+                                    .fill(Color.gray.opacity(0.2))
+                                    .frame(height: 100)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .overlay(
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle())
+                                    )
+                            }
                         }
                     }
-                )
-                .frame(height: 80) // Smaller thumbnail size
+                }
+                .padding(.horizontal)
+            }
+            
+            if isLoading {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.5)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black.opacity(0.1))
             }
         }
-        .padding(.horizontal, 8)
+        .onAppear {
+            loadThumbnails()
+        }
     }
-}
-
-// Separate view for thumbnail to improve performance
-struct BackgroundThumbnailView: View {
-    let filename: String
-    let isProcessing: Bool
-    let onSelect: () -> Void
     
-    @State private var thumbnailImage: UIImage?
-    
-    private func loadThumbnail() async {
-        // Update the path to match our project location
-        let workspacePath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
-        guard let originalImage = UIImage(contentsOfFile: workspacePath) else { return }
+    private func loadThumbnails() {
+        isLoading = true
         
+        // Load thumbnails progressively to improve performance
+        Task {
+            for filename in compositionManager.availableBackgrounds {
+                if loadedImages[filename] == nil, 
+                   let image = compositionManager.loadBackgroundImage(named: filename) {
+                    // Generate smaller thumbnail for faster loading
+                    let thumbnail = await generateThumbnail(from: image)
+                    
+                    await MainActor.run {
+                        loadedImages[filename] = thumbnail
+                    }
+                    
+                    // Add a small delay to prevent UI freezing
+                    try? await Task.sleep(nanoseconds: 10_000_000) // 10ms delay
+                }
+            }
+            
+            await MainActor.run {
+                isLoading = false
+            }
+        }
+    }
+    
+    private func generateThumbnail(from image: UIImage) async -> UIImage {
         // Create thumbnail on background thread
-        let thumbnail = await Task.detached(priority: .background) {
-            return originalImage.preparingThumbnail(of: CGSize(width: 160, height: 160))
-        }.value
+        let size = CGSize(width: 200, height: 200)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
         
-        await MainActor.run {
-            self.thumbnailImage = thumbnail
-        }
-    }
-    
-    var body: some View {
-        Button(action: onSelect) {
-            ZStack {
-                if let image = thumbnailImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                        )
-                } else {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.gray.opacity(0.1))
-                        .overlay(
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        )
-                }
-                
-                if isProcessing {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        )
-                }
-            }
-        }
-        .disabled(isProcessing)
-        .task {
-            await loadThumbnail()
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        return renderer.image { context in
+            image.draw(in: CGRect(origin: .zero, size: size))
         }
     }
 }
@@ -996,7 +988,7 @@ struct SolidColorBackgroundView: View {
             }
             
             // Custom Color Picker
-            ColorPicker("Custom Color", selection: $selectedColor)
+            ColorPicker("Custom Color".localized, selection: $selectedColor)
                 .onChange(of: selectedColor) { _, newColor in
                     compositionManager.backgroundType = .solidColor(newColor)
                     Task {
@@ -1060,18 +1052,19 @@ struct GradientBackgroundView: View {
             // Controls
             VStack(alignment: .leading, spacing: 12) {
                 // Gradient Type
-                Toggle("Radial Gradient", isOn: $isRadial)
+                Toggle("Radial Gradient".localized, isOn: $isRadial)
                 
                 // Start Color
-                ColorPicker("Start Color", selection: $startColor)
+                ColorPicker("Start Color".localized, selection: $startColor)
                 
                 // End Color
-                ColorPicker("End Color", selection: $endColor)
+                ColorPicker("End Color".localized, selection: $endColor)
                 
                 // Angle (for linear gradient)
                 if !isRadial {
                     VStack(alignment: .leading) {
-                        Text("Angle: \(Int(angle))°")
+                        Text(String(format: "Angle: %d°".localized, Int(angle)))
+                        
                         Slider(value: $angle, in: 0...360)
                     }
                 }
@@ -1118,17 +1111,17 @@ struct FrostedBackgroundView: View {
             // Controls
             VStack(alignment: .leading, spacing: 12) {
                 // Base Color
-                ColorPicker("Base Color", selection: $baseColor)
+                ColorPicker("Base Color".localized, selection: $baseColor)
                 
                 // Intensity
                 VStack(alignment: .leading) {
-                    Text("Blur Intensity: \(Int(intensity * 100))%")
+                    Text(String(format: "Blur Intensity: %d%%".localized, Int(intensity * 100)))
                     Slider(value: $intensity)
                 }
                 
                 // Opacity
                 VStack(alignment: .leading) {
-                    Text("Opacity: \(Int(opacity * 100))%")
+                    Text(String(format: "Opacity: %d%%".localized, Int(opacity * 100)))
                     Slider(value: $opacity)
                 }
             }
@@ -1169,7 +1162,7 @@ struct UploadBackgroundView: View {
                 VStack {
                     Image(systemName: "plus.circle.fill")
                         .font(.largeTitle)
-                    Text("Upload Image")
+                    Text("Upload Image".localized)
                 } 
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -1218,9 +1211,9 @@ struct TemplatesSection: View {
     var body: some View {
         VStack(spacing: 16) {
             ContentUnavailableView {
-                Label("Coming Soon", systemImage: "square.grid.2x2.fill")
+                Label("Coming Soon".localized, systemImage: "square.grid.2x2.fill")
             } description: {
-                Text("Template and layout options will be available in a future update.")
+                Text("Template and layout options will be available in a future update".localized)
             }
         }
         .padding(.horizontal)

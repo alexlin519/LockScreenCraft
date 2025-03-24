@@ -77,46 +77,35 @@ class WallpaperCompositionManager: ObservableObject {
     }
     
     private func loadAvailableBackgrounds() {
-        print("\n=== 🔍 DEBUG: Loading Available Backgrounds ===")
+        // Use the actual names from your asset catalog
+        let backgroundNames = [
+            "Simple Texture Image",
+            "Simple Texture Image (1)",
+            "Simple Texture Image (2)",
+            "Simple Texture Image (3)",
+            "Simple Texture Image (4)",
+            "Simple Texture Image (5)",
+            "Simple Texture Image (6)",
+            "Simple Texture Image (7)",
+            "Simple Texture Image (8)",
+            "Simple Texture Image (9)",
+            "Simple Texture Image (10)",
+            "Simple Texture Image (11)",
+            "Simple Texture Image (12)",
+            "Simple Texture Image (13)",
+            "Simple Texture Image (14)",
+            "Simple Texture Image (15)",
+            "Simple Texture Image (16)",
+            "Simple Texture Image (17)",
+            "Simple Texture Image (18)",
+            "Simple Texture Image (19)"
+        ]
         
-        // Try loading directly from the workspace path
-        let workspacePath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources/Background"
-        print("\n📂 Checking workspace path: \(workspacePath)")
+        // Store these names for use in selection
+        availableBackgrounds = backgroundNames
         
-        if FileManager.default.fileExists(atPath: workspacePath) {
-            print("✅ Background directory exists in workspace")
-            do {
-                let items = try FileManager.default.contentsOfDirectory(atPath: workspacePath)
-                let imageFiles = items.filter { 
-                    let fileExtension = ($0 as NSString).pathExtension.lowercased()
-                    return ["jpg", "jpeg", "png"].contains(fileExtension)
-                }.sorted()
-                
-                print("📝 Found \(imageFiles.count) image files:")
-                imageFiles.forEach { print("   • \($0)") }
-                
-                // Update available backgrounds
-                availableBackgrounds = imageFiles
-                
-                // Verify each image can be loaded
-                for filename in imageFiles {
-                    let fullPath = (workspacePath as NSString).appendingPathComponent(filename)
-                    if let _ = UIImage(contentsOfFile: fullPath) {
-                        print("✅ Successfully verified image: \(filename)")
-                    } else {
-                        print("⚠️ Failed to load image: \(filename)")
-                    }
-                }
-            } catch {
-                print("❌ Error reading workspace directory: \(error.localizedDescription)")
-            }
-        } else {
-            print("❌ Background directory not found in workspace")
-        }
-        
-        print("\n📝 Final Summary:")
-        print("• Available Backgrounds Count: \(availableBackgrounds.count)")
-        print("=== 🔍 DEBUG: Background Loading End ===\n")
+        // For debugging
+        print("📸 Available backgrounds: \(availableBackgrounds.count)")
     }
     
     private func loadUserUploadedBackgrounds() {
@@ -157,75 +146,22 @@ class WallpaperCompositionManager: ObservableObject {
     }
     
     func selectBackground(named filename: String) {
-        print("\n=== 🔍 DEBUG: Background Selection Start ===")
-        print("🎯 Selecting background: \(filename)")
-        
-        // Check cache first
-        if let cachedImage = getCachedImage(for: filename) {
-            print("✅ Found image in cache")
-            self.backgroundType = .image(cachedImage)
-            self.backgroundTransform.reset()
-            return
-        }
-        
-        // If not in cache, load from file
-        let workspacePath = "/Users/alexlin/project_code/LockScreenCraft/LockScreenCraft/Resources/Background/\(filename)"
-        print("\n📂 Trying workspace path: \(workspacePath)")
-        
-        if let image = UIImage(contentsOfFile: workspacePath) {
-            print("✅ Successfully loaded image from workspace")
-            print("   Image size: \(image.size)")
-            print("   Image scale: \(image.scale)")
-            
-            // Cache the loaded image
-            cacheImage(image, for: filename)
-            
-            self.backgroundType = .image(image)
-            self.backgroundTransform.reset()
-            return
-        }
-        
-        // Try bundle loading
-        print("📂 Trying bundle path: Resources/Background/\(filename)")
-        if let image = UIImage(named: "Resources/Background/\(filename)") {
-            print("✅ Successfully loaded image from bundle")
-            print("   Image size: \(image.size)")
-            print("   Image scale: \(image.scale)")
-            self.backgroundType = .image(image)
-            print("✅ Background type set to image")
+        // Instead of constructing paths manually:
+        if let image = loadBackgroundImage(named: filename) {
+            backgroundType = .image(image)
         } else {
-            print("❌ Failed to load image from bundle")
-            print("🔍 Trying alternate paths...")
-            
-            // Try loading with bundle path
-            if let resourcePath = Bundle.main.path(forResource: filename, ofType: nil, inDirectory: "Resources/Background") {
-                print("📂 Found resource path: \(resourcePath)")
-                if let image = UIImage(contentsOfFile: resourcePath) {
-                    print("✅ Successfully loaded image from resource path")
-                    print("   Image size: \(image.size)")
-                    print("   Image scale: \(image.scale)")
-                    self.backgroundType = .image(image)
-                    print("✅ Background type set to image")
-                    return
-                } else {
-                    print("❌ Failed to load image from resource path")
-                }
-            } else {
-                print("❌ Could not find resource path for: \(filename)")
-            }
-            
-            showError("Failed to load background image")
+            print("⚠️ Could not load background image: \(filename)")
         }
-        
-        // Verify final state
-        if case .image(let finalImage) = self.backgroundType {
-            print("✅ Final verification: Background image is set")
-            print("   Final image size: \(finalImage.size)")
-            print("   Final image scale: \(finalImage.scale)")
+    }
+    
+    func randomizeBackground() {
+        if !availableBackgrounds.isEmpty {
+            let randomFileName = availableBackgrounds.randomElement()!
+            selectBackground(named: randomFileName)
         } else {
-            print("❌ Final verification: No background image is set")
+            // Fallback to a solid color if no backgrounds are available
+            backgroundType = .solidColor(.blue)
         }
-        print("=== 🔍 DEBUG: Background Selection End ===\n")
     }
     
     func applyTransform(_ transform: Transform) {
@@ -386,5 +322,23 @@ extension UIImage {
         guard let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else { return nil }
         
         return UIImage(cgImage: cgImage)
+    }
+}
+
+// MARK: - New Helper Methods
+extension WallpaperCompositionManager {
+    func loadBackgroundImage(named filename: String) -> UIImage? {
+        // First try loading from the asset catalog with the correct folder path
+        if let image = UIImage(named: "Backgrounds_gallery/\(filename)") {
+            return image
+        }
+        
+        // Then try directly (in case the path structure is different)
+        if let image = UIImage(named: filename) {
+            return image
+        }
+        
+        print("⚠️ Failed to load background: \(filename)")
+        return nil
     }
 } 
