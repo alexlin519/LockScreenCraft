@@ -67,7 +67,7 @@ struct SettingsView: View {
                 
                 // Support Section
                 Section(header: Text("Support".localized)) {
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: BugReportView()) {
                         HStack {
                             Image(systemName: "ant")
                                 .foregroundColor(.red)
@@ -75,7 +75,7 @@ struct SettingsView: View {
                         }
                     }
                     
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: FeatureRequestView()) {
                         HStack {
                             Image(systemName: "lightbulb")
                                 .foregroundColor(.yellow)
@@ -83,11 +83,23 @@ struct SettingsView: View {
                         }
                     }
                     
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: FAQView()) {
                         HStack {
-                            Image(systemName: "envelope")
+                            Image(systemName: "questionmark.circle")
                                 .foregroundColor(.blue)
-                            Text("Contact Developer".localized)
+                            Text("FAQ".localized)
+                        }
+                    }
+                    
+                    Link(destination: URL(string: "https://github.com/yourusername/LockScreenCraft/issues")!) {
+                        HStack {
+                            Image(systemName: "git")
+                                .foregroundColor(.purple)
+                            Text("GitHub Repository".localized)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.caption)
+                                .foregroundColor(.purple)
                         }
                     }
                 }
