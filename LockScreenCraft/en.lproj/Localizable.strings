@@ -123,4 +123,60 @@
 
 // Missing template section strings
 "Coming Soon" = "Coming Soon";
-"Template and layout options will be available in a future update" = "Template and layout options will be available in a future update"; 
+"Template and layout options will be available in a future update" = "Template and layout options will be available in a future update";
+
+// Support Section
+"Support" = "Support";
+"Report a Bug" = "Report a Bug";
+"Feature Request" = "Feature Request";
+"FAQ" = "FAQ";
+"GitHub Repository" = "GitHub Repository";
+"No Email App Found" = "No Email App Found";
+"Please make sure you have an email app installed and configured on your device." = "Please make sure you have an email app installed and configured on your device.";
+"Your bug report has been submitted successfully." = "Your bug report has been submitted successfully.";
+"Your feature request has been submitted and will be reviewed." = "Your feature request has been submitted and will be reviewed.";
+"Issue Description" = "Issue Description";
+"Severity" = "Severity";
+"Select Severity" = "Select Severity";
+"Minor" = "Minor";
+"Major" = "Major";
+"Critical" = "Critical";
+"Screenshot (Optional)" = "Screenshot (Optional)";
+"Submit Report" = "Submit Report";
+"Feature Title" = "Feature Title";
+"Enter a short title for your feature" = "Enter a short title for your feature";
+"Feature Description" = "Feature Description";
+"Priority" = "Priority";
+"Select Priority" = "Select Priority";
+"Nice to Have" = "Nice to Have";
+"Helpful" = "Helpful";
+"Essential" = "Essential";
+"Submit Request" = "Submit Request";
+"Frequently Asked Questions" = "Frequently Asked Questions";
+
+// About Section
+"About" = "About";
+"App Info" = "App Info";
+"Version History" = "Version History";
+"Credits" = "Credits";
+"Licenses" = "Licenses";
+"Developer GitHub" = "Developer GitHub";
+"Details" = "Details";
+"Version" = "Version";
+"Build" = "Build";
+"Released" = "Released";
+"Platform" = "Platform";
+"Developer" = "Developer";
+"LinkedIn Profile" = "LinkedIn Profile";
+"Description" = "Description";
+"LockScreenCraft is an iOS app that allows you to create beautiful custom wallpapers for your lock screen with personalized text, backgrounds, and styling options." = "LockScreenCraft is an iOS app that allows you to create beautiful custom wallpapers for your lock screen with personalized text, backgrounds, and styling options.";
+"Lead Developer" = "Lead Developer";
+"App design, development, and concept" = "App design, development, and concept";
+"Acknowledgements" = "Acknowledgements";
+"Open Source Libraries" = "Open Source Libraries";
+"This app uses various open source libraries and components" = "This app uses various open source libraries and components";
+"Design Resources" = "Design Resources";
+"Background textures and design elements from various sources" = "Background textures and design elements from various sources";
+"Testing & Feedback" = "Testing & Feedback";
+"Thanks to all beta testers who provided valuable feedback" = "Thanks to all beta testers who provided valuable feedback";
+"View Project Website" = "View Project Website"; 

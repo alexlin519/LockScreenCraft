@@ -55,12 +55,12 @@
 "System Font" = "系统字体";
 "Line Space" = "行间距";
 "Word Space" = "字间距";
-"Tip: Use \\ or // or \\\\ to create line breaks" = "提示：使用 \\ 或 // 或 \\\\ 创建换行";
+"Tip: Use \\ or // or \\\\ to create line breaks" = "提示：使用 \\\\ 或 // 或 \\\\\\\\ 创建换行";
 "Paste" = "粘贴";
+
 // Segmented control items
 "Background" = "背景";
 "Templates" = "模板";
-"Text" = "文本";
 
 // Font control items
 "System Font" = "系统字体";
@@ -71,7 +71,7 @@
 "Right Align" = "右对齐";
 "Justified Align" = "两端对齐";
 
-// Bottom tab items - for consistency
+// Bottom tab items
 "生成" = "生成";
 "预览" = "预览";
 "调整" = "调整";
@@ -111,7 +111,8 @@
 "Confirm" = "确认";
 "Cancel" = "取消";
 "Done" = "完成";
-// Additional missing UI elements
+
+// Additional UI elements
 "Angle: %d°" = "角度: %d°";
 "Blur Intensity: %d%%" = "模糊强度: %d%%";
 "Opacity: %d%%" = "不透明度: %d%%";
@@ -122,6 +123,137 @@
 "End Color" = "结束颜色";
 "Base Color" = "基本颜色";
 
-// Missing template section strings
+// Template section
 "Coming Soon" = "即将推出";
-"Template and layout options will be available in a future update" = "模板和布局选项将在未来更新中提供"; 
+"Template and layout options will be available in a future update" = "模板和布局选项将在未来更新中提供";
+
+// Support Section
+"Support" = "支持";
+"Report a Bug" = "报告问题";
+"Feature Request" = "功能请求";
+"FAQ" = "常见问题";
+"GitHub Repository" = "GitHub 仓库";
+"No Email App Found" = "未找到电子邮件应用";
+"Please make sure you have an email app installed and configured on your device." = "请确保您的设备已安装并配置电子邮件应用。";
+"Your bug report has been submitted successfully." = "您的问题报告已成功提交。";
+"Your feature request has been submitted and will be reviewed." = "您的功能请求已提交，将会被审核。";
+"Issue Description" = "问题描述";
+"Severity" = "严重程度";
+"Select Severity" = "选择严重程度";
+"Minor" = "轻微";
+"Major" = "重要";
+"Critical" = "严重";
+"Screenshot (Optional)" = "截图（可选）";
+"Submit Report" = "提交报告";
+"Feature Title" = "功能标题";
+"Enter a short title for your feature" = "为您的功能输入简短标题";
+"Feature Description" = "功能描述";
+"Priority" = "优先级";
+"Select Priority" = "选择优先级";
+"Nice to Have" = "锦上添花";
+"Helpful" = "有帮助";
+"Essential" = "必不可少";
+"Submit Request" = "提交请求";
+"Frequently Asked Questions" = "常见问题";
+"Thank You!" = "谢谢！";
+
+// About Section
+"About" = "关于";
+"App Info" = "应用信息";
+"Version History" = "版本历史";
+"Credits" = "致谢";
+"Licenses" = "许可证";
+"Developer GitHub" = "开发者 GitHub";
+"Details" = "详情";
+"Version" = "版本";
+"Build" = "构建";
+"Released" = "发布日期";
+"Platform" = "平台";
+"Developer" = "开发者";
+"LinkedIn Profile" = "LinkedIn 主页";
+"Description" = "描述";
+"LockScreenCraft is an iOS app that allows you to create beautiful custom wallpapers for your lock screen with personalized text, backgrounds, and styling options." = "LockScreenCraft 是一款 iOS 应用，可让您创建美丽的自定义锁屏壁纸，包含个性化文本、背景和样式选项。";
+"Lead Developer" = "首席开发者";
+"App design, development, and concept" = "应用设计、开发和概念";
+"Acknowledgements" = "鸣谢";
+"Open Source Libraries" = "开源库";
+"This app uses various open source libraries and components" = "本应用使用了多种开源库和组件";
+"Design Resources" = "设计资源";
+"Background textures and design elements from various sources" = "来自各种来源的背景纹理和设计元素";
+"Testing & Feedback" = "测试与反馈";
+"Thanks to all beta testers who provided valuable feedback" = "感谢所有提供宝贵反馈的测试人员";
+"View Project Website" = "查看项目网站";
+
+// Screenshot UI Elements
+"SCREENSHOT" = "截图";
+"Add Screenshot" = "添加截图";
+"DEVICE INFORMATION" = "设备信息";
+"Device Info" = "设备信息";
+
+// FAQ Content
+"How do I create a wallpaper?" = "如何创建壁纸？";
+"Go to the Generate tab, enter your text, customize the font and color settings, then tap 'Generate'." = "转到\"生成\"选项卡，输入您的文本，自定义字体和颜色设置，然后点击\"生成\"。";
+"How do I change the wallpaper background?" = "如何更改壁纸背景？";
+"In the Generate tab, select the 'Background' segment, then choose from Gallery, Solid, Gradient, or Frosted options." = "在\"生成\"选项卡中，选择\"背景\"部分，然后从图库、纯色、渐变或磨砂选项中选择。";
+"How do I save my wallpaper?" = "如何保存我的壁纸？";
+"After creating your wallpaper, go to the Preview tab and tap the Save button in the top right corner. The wallpaper will be saved to your Photos app." = "创建壁纸后，转到\"预览\"选项卡并点击右上角的\"保存\"按钮。壁纸将保存到您的照片应用中。";
+"Can I adjust the text after generating?" = "生成后可以调整文本吗？";
+"Yes. Go to the Adjust tab to modify font, size, color, alignment, spacing, and other text properties." = "是的。转到\"调整\"选项卡以修改字体、大小、颜色、对齐方式、间距和其他文本属性。";
+"How do I apply the wallpaper to my lock screen?" = "如何将壁纸应用到我的锁屏？";
+"After saving to Photos, go to Settings > Wallpaper > Add New Wallpaper on your device, select the saved image, and set it as your lock screen." = "保存到照片后，在您的设备上进入设置 > 墙纸 > 添加新墙纸，选择已保存的图像，并将其设置为锁屏。";
+"Why can't I see my changes in Preview?" = "为什么在预览中看不到我的更改？";
+"After making adjustments, you need to tap 'Apply' to update the preview with your changes." = "进行调整后，您需要点击\"应用\"以使用您的更改更新预览。";
+"How do I create line breaks in my text?" = "如何在文本中创建换行？";
+"Use \\ or // or \\\\ in your text to create line breaks between words or phrases." = "在文本中使用 \\\\ 或 // 或 \\\\\\\\ 在单词或短语之间创建换行。";
+"Can I use my own background image?" = "我可以使用自己的背景图像吗？";
+"Yes! Go to the Preview tab, select the Background section, then choose 'Upload' to select an image from your photo library." = "是的！转到\"预览\"选项卡，选择\"背景\"部分，然后选择\"上传\"从您的照片库中选择图片。";
+"How many wallpapers can I create?" = "我可以创建多少壁纸？";
+"There is no limit to the number of wallpapers you can create and save." = "您可以创建和保存的壁纸数量没有限制。";
+"Is there a way to batch create wallpapers?" = "有批量创建壁纸的方法吗？";
+"Not currently, but batch creation is planned for a future update." = "目前没有，但计划在未来更新中添加批量创建功能。";
+
+// Version History Content
+"Initial release" = "首次发布";
+"Text styling with multiple font options" = "多种字体选项的文本样式";
+"Background gallery with texture options" = "带纹理选项的背景图库";
+"Device-specific rendering" = "特定设备渲染";
+"Save to Photos library" = "保存到照片库";
+"Multiple language support" = "多语言支持";
+"Beta testing release" = "测试版发布";
+"Core functionality implementation" = "核心功能实现";
+"Basic UI implementation" = "基本界面实现";
+"Stability improvements" = "稳定性改进";
+
+// Additional FAQ Items from screenshot
+"How do I change the font?" = "如何更改字体？";
+"Go to the Adjust tab, tap on the Font section to select from available system fonts." = "转到\"调整\"选项卡，点击字体部分以从可用系统字体中进行选择。";
+
+"Can I process multiple text files at once?" = "我可以同时处理多个文本文件吗？";
+"Yes, in the Process Files section you can import multiple text files and create wallpapers in batch." = "是的，在处理文件部分，您可以导入多个文本文件并批量创建壁纸。";
+
+"How do I adjust the background?" = "如何调整背景？";
+"In the Generate tab, select the Background segment to access options for changing colors, gradients, or uploading custom images." = "在\"生成\"选项卡中，选择背景部分以访问更改颜色、渐变或上传自定义图像的选项。";
+
+"Why is my text hard to read on certain backgrounds?" = "为什么我的文本在某些背景上难以阅读？";
+"Try adjusting the contrast between text and background colors, or add a slight blur to the background to make text more readable." = "尝试调整文本和背景颜色之间的对比度，或者为背景添加轻微模糊以使文本更易读。";
+
+"Can I set this as my lock screen automatically?" = "我可以自动将其设置为锁屏吗？";
+"Currently iOS doesn't allow apps to change your lock screen directly. You'll need to save the image and set it as wallpaper in iOS Settings." = "目前iOS不允许应用直接更改您的锁屏。您需要保存图像并在iOS设置中将其设置为壁纸。";
+
+// Additional FAQ items that might be useful
+"How do I share my wallpaper?" = "如何分享我的壁纸？";
+"After saving, tap the Share button in the Preview screen to send your wallpaper via messages, email, or social media." = "保存后，点击预览屏幕中的分享按钮，通过消息、电子邮件或社交媒体发送您的壁纸。";
+
+"Does LockScreenCraft work on iPad?" = "LockScreenCraft在iPad上可以使用吗？";
+"Yes, LockScreenCraft is universal and works on both iPhone and iPad with optimized interfaces for each device." = "是的，LockScreenCraft是通用的，适用于iPhone和iPad，并为每种设备提供优化的界面。";
+
+// FAQ Answers shown in screenshot
+"After creating your wallpaper, go to the Preview tab and tap the Save button in the top right corner. The wallpaper will be saved to your Photos app." = "创建壁纸后，转到\"预览\"选项卡并点击右上角的\"保存\"按钮。壁纸将保存到您的照片应用中。";
+
+"Yes! Go to the Preview tab, select the Background section, then choose 'Upload' to select an image from your photo library." = "是的！转到\"预览\"选项卡，选择\"背景\"部分，然后选择\"上传\"从您的照片库中选择图片。";
+
+"In the Preview tab, select the Text section. You'll find a font picker at the top where you can choose from various fonts." = "在\"预览\"选项卡中，选择\"文本\"部分。您将在顶部找到字体选择器，可以从各种字体中进行选择。";
+
+"Yes. In the Generate tab, tap 'Process Text Files' and select multiple text files. You can then navigate between them in the Preview tab." = "是的。在\"生成\"选项卡中，点击\"批量处理文件\"并选择多个文本文件。然后可以在\"预览\"选项卡中浏览它们。";
+
+"You can use '\' or '//' characters in your text to create line breaks." = "您可以在文本中使用\"\\\"或\"//\"字符来创建换行。"; 
