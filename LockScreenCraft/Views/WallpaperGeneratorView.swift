@@ -677,27 +677,30 @@ struct ActionButtonsSection: View {
             .buttonStyle(.borderedProminent)
             .disabled(viewModel.isGenerating)
             
-            // Process Text Files button
-            Button {
-                Task {
-                    await viewModel.startProcessingAllFiles()
+            // Put Process Text Files and Import from TXT in the same row
+            HStack(spacing: 12) {
+                // Process Text Files button
+                Button {
+                    Task {
+                        await viewModel.startProcessingAllFiles()
+                    }
+                } label: {
+                    Label("Process Files".localized, systemImage: "doc.text.magnifyingglass")
+                        .frame(maxWidth: .infinity)
                 }
-            } label: {
-                Label("Process Text Files".localized, systemImage: "doc.text.magnifyingglass")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            
-            // Import from TXT button
-            Button {
-                Task {
-                    viewModel.showingFilePicker = true
+                .buttonStyle(.bordered)
+                
+                // Import from TXT button
+                Button {
+                    Task {
+                        viewModel.showingFilePicker = true
+                    }
+                } label: {
+                    Label("Import TXT".localized, systemImage: "doc.text")
+                        .frame(maxWidth: .infinity)
                 }
-            } label: {
-                Label("Import from TXT".localized, systemImage: "doc.text")
-                    .frame(maxWidth: .infinity)
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
             .padding(.horizontal)
             
             // Split Paragraphs button
@@ -727,6 +730,17 @@ struct ActionButtonsSection: View {
                 }
                 .padding(.horizontal)
             }
+        }
+        .sheet(isPresented: $viewModel.showingFilePicker) {
+            DocumentPicker(
+                allowedContentTypes: [.plainText],
+                onPick: { urls in
+                    Task {
+                        await viewModel.processSelectedFiles(urls)
+                        selectedTab = 1 // Switch to preview tab
+                    }
+                }
+            )
         }
         .sheet(isPresented: $viewModel.showingTextSplitterSheet) {
             TextSplitterView(
