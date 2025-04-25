@@ -490,9 +490,35 @@ class WallpaperGeneratorViewModel: ObservableObject {
     // Add these methods to your existing WallpaperGeneratorViewModel class
     func setSplitParagraphs(_ paragraphs: [String]) {
         splitParagraphs = paragraphs
-        // Only update the input text, don't force tab changes
-        if let firstParagraph = paragraphs.first, !firstParagraph.isEmpty {
+        
+        // Simply store the paragraphs but don't auto-load anything
+        // Don't trigger any automatic generation
+        // Don't jump tabs
+        
+        // Just close the sheet
+        showingTextSplitterSheet = false
+    }
+
+    func useFirstParagraph() {
+        if let firstParagraph = splitParagraphs.first, !firstParagraph.isEmpty {
             inputText = firstParagraph
+            // Generate the wallpaper but don't switch tabs
+            Task {
+                await generateWallpaper()
+            }
+        }
+    }
+
+    func useNextParagraph() {
+        guard let currentIndex = currentParagraphIndex(),
+              currentIndex < splitParagraphs.count - 1 else { return }
+        
+        // Set the input text to the next paragraph
+        inputText = splitParagraphs[currentIndex + 1]
+        
+        // Generate the wallpaper with the new text
+        Task {
+            await generateWallpaper()
         }
     }
 

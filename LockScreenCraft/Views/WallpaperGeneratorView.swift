@@ -16,6 +16,59 @@ struct GenerationTabView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     TextInputSection(inputText: $viewModel.inputText)
+                    
+                    // Add paragraph navigation controls here
+                    if !viewModel.splitParagraphs.isEmpty {
+                        HStack {
+                            if viewModel.splitParagraphs.first == viewModel.inputText {
+                                // If we're on the first paragraph, show "First Paragraph" label
+                                Text("First Paragraph")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(8)
+                            } else {
+                                // If not on first paragraph, show button to go to first
+                                Button("First Paragraph") {
+                                    viewModel.useFirstParagraph()
+                                }
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(8)
+                            }
+                            
+                            Spacer()
+                            
+                            Text("\(viewModel.currentParagraphIndex() ?? 0 + 1) of \(viewModel.splitParagraphs.count)")
+                                .font(.caption)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                viewModel.useNextParagraph()
+                            }) {
+                                HStack {
+                                    Text("Next")
+                                    Image(systemName: "arrow.right")
+                                }
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                            }
+                            .disabled(!viewModel.hasNextParagraph())
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                    }
+                    
                     DeviceSelectionSection(viewModel: viewModel)
                     ActionButtonsSection(viewModel: viewModel, selectedTab: $selectedTab)
                 }
@@ -35,79 +88,38 @@ struct PreviewTabView: View {
     @Binding var thumbnailScale: CGFloat
     
     var body: some View {
-        VStack {
-            // If we have a generated image, show it
-            // If not, show a placeholder instead of trying to generate one
-            if viewModel.generatedImage != nil {
-                PreviewSection(
-                    viewModel: viewModel,
-                    isFullScreenPreview: $isFullScreenPreview,
-                    thumbnailScale: $thumbnailScale
-                )
-                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
-                .onTapGesture {
-                    isFullScreenPreview = true
+        ScrollView {
+            VStack(spacing: 16) {
+                // IMPROVED PARAGRAPH NAVIGATION - Visible and prominent
+                if !viewModel.splitParagraphs.isEmpty {
+                    ParagraphNavigationBar(viewModel: viewModel)
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                        .padding([.horizontal, .top])
                 }
                 
-                TextControlPanel(viewModel: viewModel)
-                    .padding(.horizontal)
-            } else {
-                // Show a helpful message when no image exists
-                VStack(spacing: 25) {
-                    Image(systemName: "photo.badge.plus")
-                        .font(.system(size: 60))
-                        .foregroundColor(.secondary)
-                        
-                    Text("No Preview Available".localized)
-                        .font(.title2)
-                        .fontWeight(.medium)
-                        
-                    Text("Generate a wallpaper first by entering text in the Generate tab".localized)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.secondary)
-                        
-                    Button("Go to Generate Tab".localized) {
-                        selectedTab = 0
+                if viewModel.generatedImage != nil {
+                    PreviewSection(
+                        viewModel: viewModel,
+                        isFullScreenPreview: $isFullScreenPreview,
+                        thumbnailScale: $thumbnailScale
+                    )
+                    .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
+                    .onTapGesture {
+                        isFullScreenPreview = true
                     }
-                    .buttonStyle(.borderedProminent)
-                    .padding(.top)
+                    
+                    TextControlPanel(viewModel: viewModel)
+                        .padding(.horizontal)
+                } else {
+                    // Show a helpful message when no image exists
+                    EmptyPreviewView(selectedTab: $selectedTab)
                 }
-                .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+                Spacer(minLength: 50) // Space for tab bar
             }
-            
-            Spacer(minLength: 0)
-            
-            // Emergency tab navigation
-            HStack {
-                Text("Tab Navigation")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Button("Go to Generate") {
-                    // Use NotificationCenter to tell the app to switch tabs
-                    NotificationCenter.default.post(
-                        name: .switchToTab,
-                        object: 0 // Index of Generate tab
-                    )
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                
-                Button("Go to Settings") {
-                    NotificationCenter.default.post(
-                        name: .switchToTab,
-                        object: 1 // Index of Settings tab
-                    )
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
-            .background(Color(.systemBackground))
         }
         .navigationTitle("Preview".localized)
         .toolbar {
@@ -120,10 +132,7 @@ struct PreviewTabView: View {
             
             ToolbarItem(placement: .navigationBarTrailing) {
                 if viewModel.generatedImage != nil {
-                    HStack(spacing: 20) {
-                        ParagraphNavigationControls(viewModel: viewModel)
-                        SaveButton(viewModel: viewModel)
-                    }
+                    SaveButton(viewModel: viewModel)
                 }
             }
         }
@@ -137,6 +146,106 @@ struct PreviewTabView: View {
             }
         }
         .id(LocalizationManager.shared.refreshID)
+    }
+}
+
+// MARK: - Paragraph Navigation Bar (Clean, Reusable Component)
+struct ParagraphNavigationBar: View {
+    @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    
+    var body: some View {
+        HStack {
+            Button(action: {
+                navigateToPrevious()
+            }) {
+                HStack {
+                    Image(systemName: "chevron.left")
+                    Text("Previous")
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+            }
+            .disabled(!viewModel.hasPreviousParagraph())
+            
+            Spacer()
+            
+            VStack(spacing: 2) {
+                Text("Paragraph")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text("\(viewModel.currentParagraphIndex() ?? 0 + 1) of \(viewModel.splitParagraphs.count)")
+                    .font(.headline)
+            }
+            
+            Spacer()
+            
+            Button(action: {
+                navigateToNext()
+            }) {
+                HStack {
+                    Text("Next")
+                    Image(systemName: "chevron.right")
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+            }
+            .disabled(!viewModel.hasNextParagraph())
+        }
+    }
+    
+    private func navigateToPrevious() {
+        guard let currentIndex = viewModel.currentParagraphIndex(),
+              currentIndex > 0 else { return }
+        
+        viewModel.inputText = viewModel.splitParagraphs[currentIndex - 1]
+        Task {
+            await viewModel.generateWallpaper()
+        }
+    }
+    
+    private func navigateToNext() {
+        guard let currentIndex = viewModel.currentParagraphIndex(),
+              currentIndex < viewModel.splitParagraphs.count - 1 else { return }
+        
+        viewModel.inputText = viewModel.splitParagraphs[currentIndex + 1]
+        Task {
+            await viewModel.generateWallpaper()
+        }
+    }
+}
+
+// MARK: - Empty Preview View (Extracted for cleaner code)
+struct EmptyPreviewView: View {
+    @Binding var selectedTab: Int
+    
+    var body: some View {
+        VStack(spacing: 25) {
+            Image(systemName: "photo.badge.plus")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
+                
+            Text("No Preview Available".localized)
+                .font(.title2)
+                .fontWeight(.medium)
+                
+            Text("Generate a wallpaper first by entering text in the Generate tab".localized)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+                
+            Button("Go to Generate Tab".localized) {
+                selectedTab = 0
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.top)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, minHeight: 400)
     }
 }
 
@@ -463,7 +572,10 @@ struct WallpaperGeneratorView: View {
             )
         }
         .sheet(isPresented: $viewModel.showingTextSplitterSheet) {
-            TextSplitterView(textToProcess: $viewModel.inputText)
+            TextSplitterView(
+                textToProcess: $viewModel.inputText,
+                viewModel: viewModel
+            )
         }
         .sheet(isPresented: $viewModel.showingParagraphBrowser) {
             ParagraphBrowserView(
@@ -616,19 +728,11 @@ struct ActionButtonsSection: View {
                 .padding(.horizontal)
             }
         }
-        .sheet(isPresented: $viewModel.showingFilePicker) {
-            DocumentPicker(
-                allowedContentTypes: [.plainText],
-                onPick: { urls in
-                    Task {
-                        await viewModel.processSelectedFiles(urls)
-                        selectedTab = 1 // Switch to preview tab
-                    }
-                }
-            )
-        }
         .sheet(isPresented: $viewModel.showingTextSplitterSheet) {
-            TextSplitterView(textToProcess: $viewModel.inputText)
+            TextSplitterView(
+                textToProcess: $viewModel.inputText,
+                viewModel: viewModel
+            )
         }
         .sheet(isPresented: $viewModel.showingParagraphBrowser) {
             ParagraphBrowserView(

@@ -3,6 +3,7 @@ import SwiftUI
 struct TextSplitterView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var textToProcess: String
+    @ObservedObject var viewModel: WallpaperGeneratorViewModel
     @State private var inputText = ""
     @State private var splitParagraphs: [String] = []
     @State private var selectedDelimiter: SplitDelimiter = .emptyLine
@@ -73,10 +74,9 @@ struct TextSplitterView: View {
                     dismiss()
                 },
                 trailing: Button("Use First Paragraph") {
-                    if let firstParagraph = splitParagraphs.first, !firstParagraph.isEmpty {
-                        textToProcess = firstParagraph
-                        dismiss()
-                    }
+                    viewModel.setSplitParagraphs(splitParagraphs)
+                    viewModel.useFirstParagraph()
+                    dismiss()
                 }
                 .disabled(splitParagraphs.isEmpty)
             )
