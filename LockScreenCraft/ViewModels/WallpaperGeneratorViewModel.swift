@@ -481,5 +481,56 @@ class WallpaperGeneratorViewModel: ObservableObject {
         errorMessage = message  // Using errorMessage for both error and success
         showError = true        // Using showError as a general alert flag
     }
+
+    // Add these properties to your existing WallpaperGeneratorViewModel class
+    @Published var splitParagraphs: [String] = []
+    @Published var showingTextSplitterSheet = false
+    @Published var showingParagraphBrowser = false
+
+    // Add these methods to your existing WallpaperGeneratorViewModel class
+    func setSplitParagraphs(_ paragraphs: [String]) {
+        splitParagraphs = paragraphs
+        // Only update the input text, don't force tab changes
+        if let firstParagraph = paragraphs.first, !firstParagraph.isEmpty {
+            inputText = firstParagraph
+        }
+    }
+
+    func browseAllParagraphs() {
+        if !splitParagraphs.isEmpty {
+            showingParagraphBrowser = true
+        }
+    }
+
+    // Add these helper methods for paragraph navigation
+    func currentParagraphIndex() -> Int? {
+        return splitParagraphs.firstIndex(of: inputText)
+    }
+
+    func hasPreviousParagraph() -> Bool {
+        guard let currentIndex = currentParagraphIndex() else { return false }
+        return currentIndex > 0
+    }
+
+    func hasNextParagraph() -> Bool {
+        guard let currentIndex = currentParagraphIndex() else { return false }
+        return currentIndex < splitParagraphs.count - 1
+    }
+
+    // Add this method to handle paragraph operations without locking tab navigation
+    func handleSplitParagraphs() {
+        // Allow processing paragraphs without restricting navigation
+        if !splitParagraphs.isEmpty {
+            // Use the first paragraph if available
+            if let firstParagraph = splitParagraphs.first, !firstParagraph.isEmpty {
+                inputText = firstParagraph
+                Task {
+                    await generateWallpaper()
+                    // Suggest switching to preview but don't force it
+                    NotificationCenter.default.post(name: .suggestPreviewTab, object: nil)
+                }
+            }
+        }
+    }
 } 
 

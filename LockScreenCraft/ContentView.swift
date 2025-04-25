@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        WallpaperGeneratorView()  // Update this to show our main view
+        WallpaperGeneratorView()
     }
 }
 

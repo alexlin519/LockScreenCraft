@@ -35,93 +35,105 @@ struct PreviewTabView: View {
     @Binding var thumbnailScale: CGFloat
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 16) {
-                // If we have a generated image, show it
-                // If not, show a placeholder instead of trying to generate one
+        VStack {
+            // If we have a generated image, show it
+            // If not, show a placeholder instead of trying to generate one
+            if viewModel.generatedImage != nil {
+                PreviewSection(
+                    viewModel: viewModel,
+                    isFullScreenPreview: $isFullScreenPreview,
+                    thumbnailScale: $thumbnailScale
+                )
+                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
+                .onTapGesture {
+                    isFullScreenPreview = true
+                }
+                
+                TextControlPanel(viewModel: viewModel)
+                    .padding(.horizontal)
+            } else {
+                // Show a helpful message when no image exists
+                VStack(spacing: 25) {
+                    Image(systemName: "photo.badge.plus")
+                        .font(.system(size: 60))
+                        .foregroundColor(.secondary)
+                        
+                    Text("No Preview Available".localized)
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        
+                    Text("Generate a wallpaper first by entering text in the Generate tab".localized)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                        
+                    Button("Go to Generate Tab".localized) {
+                        selectedTab = 0
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            
+            Spacer(minLength: 0)
+            
+            // Emergency tab navigation
+            HStack {
+                Text("Tab Navigation")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Button("Go to Generate") {
+                    // Use NotificationCenter to tell the app to switch tabs
+                    NotificationCenter.default.post(
+                        name: .switchToTab,
+                        object: 0 // Index of Generate tab
+                    )
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                
+                Button("Go to Settings") {
+                    NotificationCenter.default.post(
+                        name: .switchToTab,
+                        object: 1 // Index of Settings tab
+                    )
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+            .background(Color(.systemBackground))
+        }
+        .navigationTitle("Preview".localized)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if let currentFile = viewModel.currentProcessingFile {
+                    Text("\(currentFile) (\(viewModel.currentFileIndex + 1)/\(viewModel.availableTextFiles.count))")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
                 if viewModel.generatedImage != nil {
-                    PreviewSection(
-                        viewModel: viewModel,
-                        isFullScreenPreview: $isFullScreenPreview,
-                        thumbnailScale: $thumbnailScale
-                    )
-                    .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
-                    .onTapGesture {
-                        isFullScreenPreview = true
-                    }
-                    
-                    TextControlPanel(viewModel: viewModel)
-                        .padding(.horizontal)
-                } else {
-                    // Show a helpful message when no image exists
-                    VStack(spacing: 25) {
-                        Image(systemName: "photo.badge.plus")
-                            .font(.system(size: 60))
-                            .foregroundColor(.secondary)
-                            
-                        Text("No Preview Available".localized)
-                            .font(.title2)
-                            .fontWeight(.medium)
-                            
-                        Text("Generate a wallpaper first by entering text in the Generate tab".localized)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.secondary)
-                            
-                        Button("Go to Generate Tab".localized) {
-                            selectedTab = 0
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .padding(.top)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                
-                Spacer(minLength: 0)
-            }
-            .navigationTitle("Preview".localized)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if let currentFile = viewModel.currentProcessingFile {
-                        Text("\(currentFile) (\(viewModel.currentFileIndex + 1)/\(viewModel.availableTextFiles.count))")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    if viewModel.generatedImage != nil {
-                        Button(action: {
-                            Task {
-                                await viewModel.saveToPhotos()
-                                
-                                if !viewModel.availableTextFiles.isEmpty {
-                                    let nextIndex = viewModel.currentFileIndex + 1
-                                    if nextIndex < viewModel.availableTextFiles.count {
-                                        await viewModel.selectFileAt(index: nextIndex)
-                                    } else {
-                                        viewModel.currentProcessingFile = nil
-                                    }
-                                }
-                            }
-                        }) {
-                            if !viewModel.availableTextFiles.isEmpty {
-                                Label("Save & Next".localized, systemImage: "arrow.right.circle.fill")
-                            } else {
-                                Label("Save".localized, systemImage: "square.and.arrow.down")
-                            }
-                        }
-                        .keyboardShortcut("s", modifiers: .command)
+                    HStack(spacing: 20) {
+                        ParagraphNavigationControls(viewModel: viewModel)
+                        SaveButton(viewModel: viewModel)
                     }
                 }
             }
-            .fullScreenCover(isPresented: $isFullScreenPreview) {
-                if let image = viewModel.generatedImage {
-                    FullScreenPreview(
-                        image: image,
-                        device: viewModel.selectedDevice,
-                        isPresented: $isFullScreenPreview
-                    )
-                }
+        }
+        .sheet(isPresented: $isFullScreenPreview) {
+            if let image = viewModel.generatedImage {
+                FullScreenPreview(
+                    image: image,
+                    device: viewModel.selectedDevice,
+                    isPresented: $isFullScreenPreview
+                )
             }
         }
         .id(LocalizationManager.shared.refreshID)
@@ -317,49 +329,166 @@ struct WallpaperGeneratorView: View {
     @StateObject private var localizationManager = LocalizationManager.shared
     
     var body: some View {
-        print("📱 WallpaperGeneratorView body is rendering")
-        
-        return TabView(selection: $selectedTab) {
-            GenerationTabView(viewModel: viewModel, selectedTab: $selectedTab)
-                .tabItem {
-                    Label("Generate".localized, systemImage: "text.word.spacing")
+        // THIS IS THE CRITICAL PART - Use a ZStack to ensure the TabView is always accessible
+        ZStack(alignment: .bottom) {
+            // Inner tab content
+            Group {
+                if selectedTab == 0 {
+                    // GENERATE TAB
+                    NavigationView {
+                        ScrollView {
+                            VStack(spacing: 24) {
+                                TextInputSection(inputText: $viewModel.inputText)
+                                DeviceSelectionSection(viewModel: viewModel)
+                                ActionButtonsSection(viewModel: viewModel, selectedTab: $selectedTab)
+                            }
+                            .padding(.vertical)
+                        }
+                        .navigationTitle("Generate".localized)
+                    }
+                } else if selectedTab == 1 {
+                    // PREVIEW TAB
+                    NavigationView {
+                        VStack {
+                            if viewModel.generatedImage != nil {
+                                PreviewSection(
+                                    viewModel: viewModel,
+                                    isFullScreenPreview: $isFullScreenPreview,
+                                    thumbnailScale: $thumbnailScale
+                                )
+                                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
+                                .onTapGesture {
+                                    isFullScreenPreview = true
+                                }
+                                
+                                TextControlPanel(viewModel: viewModel)
+                                    .padding(.horizontal)
+                            } else {
+                                // Show a helpful message when no image exists
+                                VStack(spacing: 25) {
+                                    Image(systemName: "photo.badge.plus")
+                                        .font(.system(size: 60))
+                                        .foregroundColor(.secondary)
+                                        
+                                    Text("No Preview Available".localized)
+                                        .font(.title2)
+                                        .fontWeight(.medium)
+                                        
+                                    Text("Generate a wallpaper first by entering text in the Generate tab".localized)
+                                        .multilineTextAlignment(.center)
+                                        .foregroundColor(.secondary)
+                                        
+                                    Button("Go to Generate Tab".localized) {
+                                        selectedTab = 0
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .padding(.top)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
+                            
+                            Spacer(minLength: 100) // Important: Add extra space at bottom
+                        }
+                        .navigationTitle("Preview".localized)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                if let currentFile = viewModel.currentProcessingFile {
+                                    Text("\(currentFile) (\(viewModel.currentFileIndex + 1)/\(viewModel.availableTextFiles.count))")
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                if viewModel.generatedImage != nil {
+                                    HStack(spacing: 20) {
+                                        ParagraphNavigationControls(viewModel: viewModel)
+                                        SaveButton(viewModel: viewModel)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // ADJUST TAB - Whatever this contains
+                    AdjustTabView(viewModel: viewModel)
                 }
-                .tag(0)
+            }
+            .padding(.bottom, 50) // Add padding to prevent content from covering the tab bar
             
-            PreviewTabView(
-                viewModel: viewModel,
-                selectedTab: $selectedTab,
-                isFullScreenPreview: $isFullScreenPreview,
-                thumbnailScale: $thumbnailScale
+            // Custom tab bar - THIS IS CRITICAL - it's always on top and accessible
+            HStack(spacing: 0) {
+                ForEach(0..<3) { index in
+                    Button(action: {
+                        selectedTab = index
+                    }) {
+                        VStack {
+                            Image(systemName: getTabIcon(index))
+                                .imageScale(.large)
+                            Text(getTabTitle(index))
+                                .font(.caption)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .foregroundColor(selectedTab == index ? .blue : .gray)
+                    }
+                }
+            }
+            .background(Color(.systemBackground))
+            .overlay(
+                Rectangle()
+                    .frame(height: 0.5)
+                    .foregroundColor(Color.gray.opacity(0.3)),
+                alignment: .top
             )
-            .tabItem {
-                Label("Preview".localized, systemImage: "photo")
+        }
+        .sheet(isPresented: $isFullScreenPreview) {
+            if let image = viewModel.generatedImage {
+                FullScreenPreview(
+                    image: image,
+                    device: viewModel.selectedDevice,
+                    isPresented: $isFullScreenPreview
+                )
             }
-            .tag(1)
-            
-            AdjustTabView(viewModel: viewModel)
-                .tabItem {
-                    Label("Adjust".localized, systemImage: "crop")
+        }
+        .sheet(isPresented: $viewModel.showingFilePicker) {
+            DocumentPicker(
+                allowedContentTypes: [.plainText],
+                onPick: { urls in
+                    Task {
+                        await viewModel.processSelectedFiles(urls)
+                        selectedTab = 1 // Switch to preview tab
+                    }
                 }
-                .tag(2)
+            )
         }
-        .onAppear {
-            print("🚀 WallpaperGeneratorView appeared")
+        .sheet(isPresented: $viewModel.showingTextSplitterSheet) {
+            TextSplitterView(textToProcess: $viewModel.inputText)
         }
-        .alert(viewModel.errorMessage?.starts(with: "Wallpaper saved") == true ? "Success".localized : "Error".localized, 
-               isPresented: $viewModel.showError) {
-            Button("OK".localized, role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage ?? "An unknown error occurred".localized)
+        .sheet(isPresented: $viewModel.showingParagraphBrowser) {
+            ParagraphBrowserView(
+                paragraphs: viewModel.splitParagraphs,
+                selectedText: $viewModel.inputText
+            )
         }
-        .overlay {
-            if viewModel.isGenerating {
-                LoadingOverlay()
-            }
+    }
+    
+    // Helper functions for tab bar
+    private func getTabIcon(_ index: Int) -> String {
+        switch index {
+        case 0: return "pencil"
+        case 1: return "eye"
+        case 2: return "slider.horizontal.3"
+        default: return "questionmark"
         }
-        .id(localizationManager.refreshID)
-        .onTapGesture {
-            self.hideKeyboard()
+    }
+    
+    private func getTabTitle(_ index: Int) -> String {
+        switch index {
+        case 0: return "Generate".localized
+        case 1: return "Preview".localized
+        case 2: return "Adjust".localized
+        default: return ""
         }
     }
 }
@@ -458,6 +587,34 @@ struct ActionButtonsSection: View {
             }
             .buttonStyle(.bordered)
             .padding(.horizontal)
+            
+            // Split Paragraphs button
+            Button(action: {
+                viewModel.showingTextSplitterSheet = true
+            }) {
+                Label("Split Paragraphs", systemImage: "doc.plaintext")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue.opacity(0.1))
+                    .foregroundColor(.blue)
+                    .cornerRadius(10)
+            }
+            .padding(.horizontal)
+            
+            // Browse All Paragraphs button
+            if !viewModel.splitParagraphs.isEmpty {
+                Button(action: {
+                    viewModel.browseAllParagraphs()
+                }) {
+                    Label("Browse All Paragraphs (\(viewModel.splitParagraphs.count))", systemImage: "list.bullet")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green.opacity(0.1))
+                        .foregroundColor(.green)
+                        .cornerRadius(10)
+                }
+                .padding(.horizontal)
+            }
         }
         .sheet(isPresented: $viewModel.showingFilePicker) {
             DocumentPicker(
@@ -468,6 +625,15 @@ struct ActionButtonsSection: View {
                         selectedTab = 1 // Switch to preview tab
                     }
                 }
+            )
+        }
+        .sheet(isPresented: $viewModel.showingTextSplitterSheet) {
+            TextSplitterView(textToProcess: $viewModel.inputText)
+        }
+        .sheet(isPresented: $viewModel.showingParagraphBrowser) {
+            ParagraphBrowserView(
+                paragraphs: viewModel.splitParagraphs,
+                selectedText: $viewModel.inputText
             )
         }
     }
@@ -565,7 +731,6 @@ struct FullScreenPreview: View {
                 }
             }
         }
-        .ignoresSafeArea()
     }
 }
 
@@ -1234,4 +1399,100 @@ extension View {
     }
 }
 #endif
+
+struct ParagraphNavigationControls: View {
+    @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    
+    var body: some View {
+        if !viewModel.splitParagraphs.isEmpty {
+            HStack(spacing: 8) {
+                Button(action: {
+                    navigateToPrevious()
+                }) {
+                    Image(systemName: "arrow.left")
+                }
+                .disabled(!viewModel.hasPreviousParagraph())
+
+                Text("\(viewModel.currentParagraphIndex() ?? 0 + 1)/\(viewModel.splitParagraphs.count)")
+                    .font(.caption)
+                    .frame(minWidth: 40)
+                
+                Button(action: {
+                    navigateToNext()
+                }) {
+                    Image(systemName: "arrow.right")
+                }
+                .disabled(!viewModel.hasNextParagraph())
+            }
+            .padding(6)
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(8)
+        }
+    }
+    
+    private func navigateToPrevious() {
+        guard let currentText = viewModel.splitParagraphs.firstIndex(of: viewModel.inputText),
+              currentText > 0 else { return }
+        
+        viewModel.inputText = viewModel.splitParagraphs[currentText - 1]
+        Task {
+            await viewModel.generateWallpaper()
+        }
+    }
+    
+    private func navigateToNext() {
+        guard let currentText = viewModel.splitParagraphs.firstIndex(of: viewModel.inputText),
+              currentText < viewModel.splitParagraphs.count - 1 else { return }
+        
+        viewModel.inputText = viewModel.splitParagraphs[currentText + 1]
+        Task {
+            await viewModel.generateWallpaper()
+        }
+    }
+}
+
+struct SaveButton: View {
+    @ObservedObject var viewModel: WallpaperGeneratorViewModel
+    
+    var body: some View {
+        Button(action: {
+            saveAndAdvance()
+        }) {
+            if !viewModel.availableTextFiles.isEmpty || viewModel.hasNextParagraph() {
+                Label("Save & Next".localized, systemImage: "arrow.right.circle.fill")
+            } else {
+                Label("Save".localized, systemImage: "square.and.arrow.down")
+            }
+        }
+        .keyboardShortcut("s", modifiers: .command)
+    }
+    
+    private func saveAndAdvance() {
+        Task {
+            await viewModel.saveToPhotos()
+            
+            // If we have split paragraphs, try to move to the next one
+            if !viewModel.splitParagraphs.isEmpty {
+                if viewModel.hasNextParagraph() {
+                    // Move to next paragraph
+                    if let currentIndex = viewModel.currentParagraphIndex(),
+                       currentIndex < viewModel.splitParagraphs.count - 1 {
+                        viewModel.inputText = viewModel.splitParagraphs[currentIndex + 1]
+                        Task {
+                            await viewModel.generateWallpaper()
+                        }
+                    }
+                }
+            } else if !viewModel.availableTextFiles.isEmpty {
+                // Handle text files as before
+                let nextIndex = viewModel.currentFileIndex + 1
+                if nextIndex < viewModel.availableTextFiles.count {
+                    await viewModel.selectFileAt(index: nextIndex)
+                } else {
+                    viewModel.currentProcessingFile = nil
+                }
+            }
+        }
+    }
+}
 

@@ -24,7 +24,7 @@ class TextRenderer {
             format: format
         )
         
-        return renderer.image { context in
+        let renderedImage = renderer.image { context in
             // Use clear background instead of white
             UIColor.clear.setFill()
             context.fill(CGRect(origin: .zero, size: device.resolution))
@@ -81,6 +81,8 @@ class TextRenderer {
                 context: nil
             )
         }
+        
+        return renderedImage
     }
     
     private func calculateOptimalFont(
