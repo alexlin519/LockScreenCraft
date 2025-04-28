@@ -256,4 +256,18 @@
 
 "Yes. In the Generate tab, tap 'Process Text Files' and select multiple text files. You can then navigate between them in the Preview tab." = "是的。在\"生成\"选项卡中，点击\"批量处理文件\"并选择多个文本文件。然后可以在\"预览\"选项卡中浏览它们。";
 
-"You can use '\' or '//' characters in your text to create line breaks." = "您可以在文本中使用\"\\\"或\"//\"字符来创建换行。"; 
+"You can use '\' or '//' characters in your text to create line breaks." = "您可以在文本中使用\"\\\"或\"//\"字符来创建换行。";
+
+// Split Paragraph Feature UI
+"Split Paragraphs" = "拆分段落";
+"PASTE TEXT TO SPLIT" = "粘贴要拆分的文本";
+"Paste from Clipboard" = "从剪贴板粘贴";
+"SPLIT METHOD" = "拆分方式";
+"Split by" = "按照以下方式拆分";
+"Empty Line" = "空行";
+"Double Line Break" = "双换行";
+"Custom Text" = "自定义文本";
+"Enter custom delimiter" = "输入自定义分隔符";
+"Preview Split" = "预览拆分";
+"Cancel" = "取消";
+"Use First Paragraph" = "使用第一段"; 

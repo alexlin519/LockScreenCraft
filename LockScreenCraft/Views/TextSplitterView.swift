@@ -16,17 +16,21 @@ struct TextSplitterView: View {
         case customText = "Custom Text"
         
         var id: String { self.rawValue }
+        
+        var localizedName: String {
+            return self.rawValue.localized
+        }
     }
     
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Paste Text to Split")) {
+                Section(header: Text("Paste Text to Split".localized)) {
                     TextEditor(text: $inputText)
                         .frame(minHeight: 150)
                         .padding(4)
                     
-                    Button("Paste from Clipboard") {
+                    Button("Paste from Clipboard".localized) {
                         if let text = UIPasteboard.general.string {
                             inputText = text
                         }
@@ -34,19 +38,19 @@ struct TextSplitterView: View {
                     .buttonStyle(.bordered)
                 }
                 
-                Section(header: Text("Split Method")) {
-                    Picker("Split by", selection: $selectedDelimiter) {
+                Section(header: Text("Split Method".localized)) {
+                    Picker("Split by".localized, selection: $selectedDelimiter) {
                         ForEach(SplitDelimiter.allCases) { delimiter in
-                            Text(delimiter.rawValue).tag(delimiter)
+                            Text(delimiter.localizedName).tag(delimiter)
                         }
                     }
                     .pickerStyle(.segmented)
                     
                     if selectedDelimiter == .customText {
-                        TextField("Enter custom delimiter", text: $customDelimiter)
+                        TextField("Enter custom delimiter".localized, text: $customDelimiter)
                     }
                     
-                    Button("Preview Split") {
+                    Button("Preview Split".localized) {
                         splitAndPreview()
                     }
                     .disabled(inputText.isEmpty)
@@ -68,12 +72,12 @@ struct TextSplitterView: View {
                     }
                 }
             }
-            .navigationTitle("Split Paragraphs")
+            .navigationTitle("Split Paragraphs".localized)
             .navigationBarItems(
-                leading: Button("Cancel") {
+                leading: Button("Cancel".localized) {
                     dismiss()
                 },
-                trailing: Button("Use First Paragraph") {
+                trailing: Button("Use First Paragraph".localized) {
                     viewModel.setSplitParagraphs(splitParagraphs)
                     viewModel.useFirstParagraph()
                     dismiss()
