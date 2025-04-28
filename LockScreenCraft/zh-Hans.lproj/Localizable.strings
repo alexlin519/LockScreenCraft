@@ -270,4 +270,13 @@
 "Enter custom delimiter" = "输入自定义分隔符";
 "Preview Split" = "预览拆分";
 "Cancel" = "取消";
-"Use First Paragraph" = "使用第一段"; 
+"Use First Paragraph" = "使用第一段";
+
+// Split Paragraph Feature UI - Section Headers
+"Paste Text to Split" = "粘贴要拆分的文本";
+"PASTE TEXT TO SPLIT" = "粘贴要拆分的文本";
+"Split Method" = "拆分方式";
+"SPLIT METHOD" = "拆分方式";
+
+// Make sure this string exists in your localization file
+"Import TXT" = "导入TXT"; 
