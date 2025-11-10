@@ -1,0 +1,75 @@
+================================================================================
+                    新字体完整列表（按文件名排序）
+================================================================================
+
+文件名 (不含扩展名)                          推断的中文名称
+--------------------------------------------------------------------------------
+
+【寒蝉活楷体系列】
+ChillCalligraphyChunQiu_ChenFeng           寒蝉春风体
+ChillCalligraphyChunQiu_QiuHong            寒蝉秋鸿体
+ChillHuoKai_ConBold                        寒蝉活楷粗体
+ChillHuoKai_ConRegular                     寒蝉活楷体常规
+ChillHuoKai_Regular                        寒蝉活楷体
+
+【行书字体】
+DuanNingRuanBiXingShu-2                    段宁软笔行书
+XiangNanXingShuTi-1                        向南行书体
+南构无恙行书                                 南构无恙行书
+鸿雷行书简体                                 鸿雷行书
+
+【魏碑字体】
+HanYiWeiBeiJian-1                          汉仪魏碑
+SanJiWeiBeiJianTi-Regular-2                三极魏碑
+SanJiXinWeiBeiJian-2                       三极新魏碑
+
+【楷书字体】
+XuandongKaishu                             玄冬楷书
+云峰寒蝉体                                   云峰寒蝉体
+
+【草书字体】
+LiuJianMaoCao-Regular                      钟齐流江毛草
+QingNiaoHuaGuangFanXingCao-2               青鸟花光行草
+
+【颜真卿法书】
+YanZhenQingFaShu-2                         颜真卿体
+
+【平方字体系列】
+PingFangChangAnTi-2                        平方长安体
+PingFangYingFengTi-2                       平方迎风体
+平方上上谦体                                 平方上上谦体
+
+【季节字体】
+Slidechunfeng-Regular                      春风体
+Slideqiu-Regular                           秋风体
+
+【柚子字体系列】
+YujiBoku-Regular                           佑字体Boku
+YujiHentaiganaAkari-Regular                佑字体Akari
+YujiHentaiganaAkebono-Regular              佑字体Akebono
+YujiMai-Regular                            佑字体Mai
+YujiSyuku-Regular                          佑字体Syuku
+
+【手写体】
+huangkaihuaLawyerfont                      黄开华手写体
+
+【AI字体】
+字体家AI造字福楷                            AI福楷
+字体家AI造字霸行                            AI霸行
+
+【其他字体】
+qiji-fallback                              奇骥古籍体
+昆明海鸥体                                   昆明海鸥体
+字制区喜脉喜欢体                              喜脉喜欢体
+
+================================================================================
+统计信息：
+- 新字体文件总数：58 个
+- 唯一字体名称：约 35 个
+- 字体格式：.ttf 和 .otf
+================================================================================
+
+注意：
+1. 字体名称是根据压缩包文件名推断的，可能不完全准确
+2. 如果发现字体名称错误，请告诉我以便更新
+3. 需要在 Xcode 中将字体文件添加到项目资源中

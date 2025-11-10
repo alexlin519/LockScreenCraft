@@ -3,18 +3,28 @@ import CoreText
 
 // Remove the @_exported import and just use the types directly since they're in the same module
 
-enum FontCategory {
-    case system
-    case chinese
-    case english
-    case handwriting
+enum FontCategory: Int, CaseIterable {
+    case regularKaiScript = 1  // 端正楷书
+    case handwritten = 2       // 手写
+    case cursiveAndRunningScript = 3  // 草书 行书 行楷
+    case other = 4             // 其他
     
     var displayName: String {
         switch self {
-        case .system: return "System"
-        case .chinese: return "Chinese"
-        case .english: return "English"
-        case .handwriting: return "Handwriting"
+        case .regularKaiScript: return "端正楷书"
+        case .handwritten: return "手写"
+        case .cursiveAndRunningScript: return "草书 行书 行楷"
+        case .other: return "其他"
+        }
+    }
+    
+    // 返回分类的显示顺序（3214）
+    var displayOrder: Int {
+        switch self {
+        case .regularKaiScript: return 1  // 第一个显示
+        case .handwritten: return 2       // 第二个显示
+        case .cursiveAndRunningScript: return 3  // 第三个显示
+        case .other: return 4             // 第四个显示
         }
     }
 }
@@ -24,15 +34,70 @@ class FontManager {
     
     private var registeredFonts: [String: String] = [:] // postScriptName to file name mapping
     
+    // Font name to category mapping
+    private let fontCategories: [String: FontCategory] = [
+        // 1. 草书 行书 行楷
+        "DuanNingRuanBiXingShu-2": .cursiveAndRunningScript,
+        "南构无恙行书": .cursiveAndRunningScript,
+        "鸿雷行书简体": .cursiveAndRunningScript,
+        "ZhiMangXing-Regular": .cursiveAndRunningScript,
+        "summerxingkai": .cursiveAndRunningScript,
+        "sanji-xingkai": .cursiveAndRunningScript,
+        "bangbang": .cursiveAndRunningScript,
+        "LiuJianMaoCao-Regular": .cursiveAndRunningScript,
+        "QingNiaoHuaGuangFanXingCao-2": .cursiveAndRunningScript,
+        "PingFangYingFengTi-2": .cursiveAndRunningScript,
+        
+        // 2. 手写
+        "huangkaihuaLawyerfont": .handwritten,
+        "zhaizaijiafentiao": .handwritten,
+        "jiangnan-hand": .handwritten,
+        "honglei-banshu": .handwritten,
+        "PingFangChangAnTi-2": .handwritten,
+        "平方上上谦体": .handwritten,
+        "ximaixihuan": .handwritten,
+        "字制区喜脉喜欢体": .handwritten,
+        
+        // 3. 端正楷书
+        "YanZhenQingFaShu-2": .regularKaiScript,
+        "LXGWWenKai-Regular": .regularKaiScript,
+        "CooperZhengKai-1.1": .regularKaiScript,
+        "guangkekai": .regularKaiScript,
+        "Dingding_JinBuTi": .regularKaiScript,
+        "ChillCalligraphyChunQiu_ChenFeng": .regularKaiScript,
+        "ChillCalligraphyChunQiu_QiuHong": .regularKaiScript,
+        "ChillHuoKai_ConBold": .regularKaiScript,
+        "ChillHuoKai_ConRegular": .regularKaiScript,
+        "ChillHuoKai_Regular": .regularKaiScript,
+        "云峰寒蝉体": .regularKaiScript,
+        "XuandongKaishu": .regularKaiScript,
+        "SanJiWeiBeiJianTi-Regular-2": .regularKaiScript,
+        "SanJiXinWeiBeiJian-2": .regularKaiScript,
+        "HanYiWeiBeiJian-1": .regularKaiScript,
+        "字体家AI造字福楷": .regularKaiScript,
+        "Ming_Chao": .regularKaiScript,
+        "linhai-li": .regularKaiScript,
+        "Slidechunfeng-Regular": .regularKaiScript,
+        "Slideqiu-Regular": .regularKaiScript,
+        "YujiMai-Regular": .regularKaiScript,
+        "昆明海鸥体": .regularKaiScript,
+        
+        // 4. 其他
+        "beili": .other,
+        "zongxi-li": .other,
+        "字体家AI造字霸行": .other,
+        "jianghu-gufeng": .other,
+        "PingFangLaiJiangHuFeiYangTi-2": .other,
+        "zhongzusong": .other,
+        "qiji-fallback": .other
+    ]
+    
     // Font name to display name mapping
     private let fontDisplayNames: [String: String] = [
-        "System Font": "系统字体",
+        // Existing fonts (System fonts excluded from list)
         "LXGWWenKai-Regular": "霞鹜文楷",
-        "SourceHanSansCN-Regular": "思源黑体",
         "Ming_Chao": "明朝体",
         "Dingding_JinBuTi": "钉钉进步体",
-        "PingFang SC": "苹方",
-        "Heiti SC": "黑体",
         "jianghu-gufeng": "江湖古风",
         "jiangnan-hand": "平方江南手写体",
         "CooperZhengKai-1.1": "汇迹正楷",
@@ -49,7 +114,60 @@ class FontManager {
         "ZhiMangXing-Regular": "志莽行书",
         "daizen": "daizen",
         "sanji-xingkai": "三极行楷",
-        "ximaixihuan": "喜脉喜欢体"
+        "ximaixihuan": "喜脉喜欢体",
+        
+        // New fonts from ziti folder - using inferred Chinese names from 新字体完整列表.txt
+        // 寒蝉活楷体系列 (Chill Calligraphy - Kai Script)
+        "ChillCalligraphyChunQiu_ChenFeng": "寒蝉春风体",
+        "ChillCalligraphyChunQiu_QiuHong": "寒蝉秋鸿体",
+        "ChillHuoKai_ConBold": "寒蝉活楷粗体",
+        "ChillHuoKai_ConRegular": "寒蝉活楷体常规",
+        "ChillHuoKai_Regular": "寒蝉活楷体",
+        "云峰寒蝉体": "云峰寒蝉体",
+        
+        // 行书字体 (Running Script / Xing Shu)
+        "DuanNingRuanBiXingShu-2": "段宁软笔行书",
+        "南构无恙行书": "南构无恙行书",
+        "鸿雷行书简体": "鸿雷行书",
+        
+        // 魏碑字体 (Wei Bei)
+        "HanYiWeiBeiJian-1": "汉仪魏碑",
+        "SanJiWeiBeiJianTi-Regular-2": "三极魏碑",
+        "SanJiXinWeiBeiJian-2": "三极新魏碑",
+        
+        // 楷书字体 (Kai Script)
+        "XuandongKaishu": "玄冬楷书",
+        
+        // 草书字体 (Cao Script)
+        "LiuJianMaoCao-Regular": "钟齐流江毛草",
+        "QingNiaoHuaGuangFanXingCao-2": "青鸟花光行草",
+        
+        // 颜真卿法书 (Yan Zhen Qing Fa Shu)
+        "YanZhenQingFaShu-2": "颜真卿体",
+        
+        // 平方字体系列 (Square Fonts)
+        "PingFangChangAnTi-2": "平方长安体",
+        "PingFangYingFengTi-2": "平方迎风体",
+        "平方上上谦体": "平方上上谦体",
+        
+        // 季节字体 (Seasonal Fonts)
+        "Slidechunfeng-Regular": "春风体",
+        "Slideqiu-Regular": "秋风体",
+        
+        // 柚子字体 - 只保留 Mai，显示为"佑字体"
+        "YujiMai-Regular": "佑字体",
+        
+        // 手写体 (Handwritten)
+        "huangkaihuaLawyerfont": "黄开华手写体",
+        
+        // AI字体 (AI Generated)
+        "字体家AI造字福楷": "AI福楷",
+        "字体家AI造字霸行": "AI霸行",
+        
+        // 其他字体 (Other Fonts)
+        "qiji-fallback": "奇骥古籍体",
+        "昆明海鸥体": "昆明海鸥体",
+        "字制区喜脉喜欢体": "喜脉喜欢体"
     ]
     
     func registerFonts() {
@@ -207,43 +325,83 @@ class FontManager {
         print("\n=== 🔍 DEBUG: Getting Available Fonts ===")
         var fonts: [FontDisplayInfo] = []
         
-        // Add system font first
-        fonts.append(FontDisplayInfo(fontName: "System Font", displayName: "系统字体"))
-        print("✅ Added system font")
+        // Fonts to exclude from the list (系统字体、思源黑体、苹方、黑体)
+        let excludedFonts: Set<String> = [
+            "System Font",
+            "PingFang SC",
+            "Heiti SC",
+            "SourceHanSansCN-Regular",
+            // Exclude other Yuji fonts, only keep YujiMai-Regular
+            "YujiBoku-Regular",
+            "YujiHentaiganaAkari-Regular",
+            "YujiHentaiganaAkebono-Regular",
+            "YujiSyuku-Regular",
+            // Exclude daizen (not in new classification)
+            "daizen",
+            // Exclude 向南行书体 (XiangNanXingShuTi-1)
+            "XiangNanXingShuTi-1"
+        ]
         
         // Add custom fonts from our registered fonts
         print("\n📝 Processing registered fonts:")
         for (postScript, filename) in registeredFonts {
             print("   Checking font: \(filename)")
-            if let displayName = fontDisplayNames[filename] {
+            // Skip excluded fonts
+            if excludedFonts.contains(filename) {
+                print("   ⏭️ Skipping excluded font: \(filename)")
+                continue
+            }
+            
+            // Only add fonts that have a display name mapping and category
+            if let displayName = fontDisplayNames[filename],
+               let category = fontCategories[filename] {
                 fonts.append(FontDisplayInfo(fontName: filename, displayName: displayName))
-                print("   ✅ Added custom font: \(displayName)")
+                print("   ✅ Added custom font: \(displayName) (Category: \(category.displayName))")
             } else {
-                print("   ⚠️ No display name mapping for: \(filename)")
+                print("   ⚠️ No display name mapping or category for: \(filename)")
             }
         }
         
-        // Add basic Chinese system fonts
-        let chineseSystemFonts = [
-            "PingFang SC",
-            "Heiti SC"
-        ]
-        
-        print("\n📝 Adding system Chinese fonts:")
-        for fontName in chineseSystemFonts {
-            if let displayName = fontDisplayNames[fontName] {
-                fonts.append(FontDisplayInfo(fontName: fontName, displayName: displayName))
-                print("   ✅ Added system Chinese font: \(displayName)")
+        // Sort fonts by category (3214 order) and then by display name within each category
+        let sortedFonts = fonts.sorted { font1, font2 in
+            let category1 = fontCategories[font1.fontName] ?? .other
+            let category2 = fontCategories[font2.fontName] ?? .other
+            
+            // First sort by category display order (3214)
+            if category1.displayOrder != category2.displayOrder {
+                return category1.displayOrder < category2.displayOrder
             }
+            
+            // Within same category, sort by display name
+            return font1.displayName < font2.displayName
         }
         
-        let sortedFonts = fonts.sorted { $0.displayName < $1.displayName }
-        print("\n📝 Final font list:")
+        print("\n📝 Final font list (sorted by category 3214):")
+        var currentCategory: FontCategory? = nil
         for font in sortedFonts {
+            if let category = fontCategories[font.fontName], category != currentCategory {
+                currentCategory = category
+                print("\n   [\(category.displayName)]")
+            }
             print("   • \(font.displayName) (\(font.fontName))")
         }
         print("=== 🔍 DEBUG: Font List End ===\n")
         
         return sortedFonts
+    }
+    
+    // Get fonts by category (nil means all fonts)
+    func getFonts(byCategory category: FontCategory?) -> [FontDisplayInfo] {
+        let allFonts = getAllAvailableFonts()
+        
+        // If no category specified, return all fonts
+        guard let category = category else {
+            return allFonts
+        }
+        
+        // Filter fonts by category
+        return allFonts.filter { font in
+            fontCategories[font.fontName] == category
+        }
     }
 } 

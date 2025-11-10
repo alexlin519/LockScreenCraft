@@ -67,7 +67,7 @@ struct SettingsView: View {
                 
                 // Support Section
                 Section(header: Text("Support".localized)) {
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: BugReportView()) {
                         HStack {
                             Image(systemName: "ant")
                                 .foregroundColor(.red)
@@ -75,7 +75,7 @@ struct SettingsView: View {
                         }
                     }
                     
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: FeatureRequestView()) {
                         HStack {
                             Image(systemName: "lightbulb")
                                 .foregroundColor(.yellow)
@@ -83,18 +83,30 @@ struct SettingsView: View {
                         }
                     }
                     
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: FAQView()) {
                         HStack {
-                            Image(systemName: "envelope")
+                            Image(systemName: "questionmark.circle")
                                 .foregroundColor(.blue)
-                            Text("Contact Developer".localized)
+                            Text("FAQ".localized)
+                        }
+                    }
+                    
+                    Link(destination: URL(string: "https://github.com/alexlin519/LockScreenCraft")!) {
+                        HStack {
+                            Image(systemName: "git")
+                                .foregroundColor(.purple)
+                            Text("GitHub Repository".localized)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.caption)
+                                .foregroundColor(.purple)
                         }
                     }
                 }
                 
                 // About Section
                 Section(header: Text("About".localized)) {
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: AppInfoView()) {
                         HStack {
                             Image(systemName: "info.circle")
                                 .foregroundColor(.blue)
@@ -102,7 +114,7 @@ struct SettingsView: View {
                         }
                     }
                     
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: VersionHistoryView()) {
                         HStack {
                             Image(systemName: "clock.arrow.circlepath")
                                 .foregroundColor(.gray)
@@ -110,7 +122,7 @@ struct SettingsView: View {
                         }
                     }
                     
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: CreditsView()) {
                         HStack {
                             Image(systemName: "person.3")
                                 .foregroundColor(.pink)
@@ -118,11 +130,24 @@ struct SettingsView: View {
                         }
                     }
                     
-                    NavigationLink(destination: EmptyView()) {
+                    NavigationLink(destination: LicensesView()) {
                         HStack {
                             Image(systemName: "doc.text")
                                 .foregroundColor(.gray)
                             Text("Licenses".localized)
+                        }
+                    }
+                    
+                    // Add direct developer links
+                    Link(destination: URL(string: "https://github.com/alexlin519")!) {
+                        HStack {
+                            Image(systemName: "git")
+                                .foregroundColor(.black)
+                            Text("Developer GitHub".localized)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.caption)
+                                .foregroundColor(.black)
                         }
                     }
                 }

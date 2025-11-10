@@ -38,7 +38,12 @@ class WallpaperGeneratorViewModel: ObservableObject {
     // MARK: - Text Styling Properties
     private let maxFontSize: Double = 600.0  // Maximum font size limit
     private let minFontSize: Double = 3.0    // Minimum font size limit
-    @Published var fontSize: Double = 100.0   // Default font size
+    @Published var fontSize: Double = 100.0 {   // Default font size
+        didSet {
+            // Trigger fast wallpaper update when fontSize changes (shorter debounce for slider responsiveness)
+            updateWallpaperFast()
+        }
+    }
     @Published var textAlignment: NSTextAlignment = .center
     @Published var isLoadingFonts: Bool = false
     @Published var lineSpacing: Double = -20.0 {  // Default line spacing
@@ -92,6 +97,9 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Font Category Filter for Randomization
+    @Published var randomFontCategoryFilter: FontCategory? = nil // nil means "全部风格" (All Styles)
+    
     // MARK: - Font Size Methods
     private var fontSizeDebounceTimer: Timer?
     @Published private(set) var fontSizeText: String = "300" {
@@ -138,7 +146,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
             showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
         } else {
             fontSize = size.rounded()
-            updateWallpaperWithDebounce()
+            // Note: didSet on fontSize will trigger update automatically
         }
     }
     
@@ -146,7 +154,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
         if fontSize < maxFontSize {
             fontSize += 1.0
             fontSizeText = String(Int(fontSize))
-            updateWallpaperWithDebounce()
+            // Note: didSet on fontSize will trigger update automatically
         } else {
             showError(message: "Font size cannot exceed \(Int(maxFontSize))")
         }
@@ -156,7 +164,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
         if fontSize > minFontSize {
             fontSize -= 1.0
             fontSizeText = String(Int(fontSize))
-            updateWallpaperWithDebounce()
+            // Note: didSet on fontSize will trigger update automatically
         } else {
             showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
         }
@@ -175,13 +183,18 @@ class WallpaperGeneratorViewModel: ObservableObject {
     }
     
     // MARK: - Wallpaper Generation
-    private func updateWallpaperWithDebounce() {
+    private func updateWallpaperWithDebounce(delay: TimeInterval = 0.5) {
         fontDebounceTimer?.invalidate()
-        fontDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+        fontDebounceTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.generateWallpaper()
             }
         }
+    }
+    
+    // Fast update for slider dragging (shorter debounce for better responsiveness)
+    private func updateWallpaperFast() {
+        updateWallpaperWithDebounce(delay: 0.1)
     }
     
     func generateWallpaper() async {
@@ -249,8 +262,18 @@ class WallpaperGeneratorViewModel: ObservableObject {
     }
     
     private func randomizeFont() {
-        guard !availableFonts.isEmpty else { return }
-        let randomFont = availableFonts.randomElement()!
+        // Get fonts filtered by selected category (nil means all fonts)
+        let filteredFonts = fontManager.getFonts(byCategory: randomFontCategoryFilter)
+        
+        guard !filteredFonts.isEmpty else {
+            // If no fonts in selected category, fallback to all fonts
+            guard !availableFonts.isEmpty else { return }
+            let randomFont = availableFonts.randomElement()!
+            selectedFont = randomFont
+            return
+        }
+        
+        let randomFont = filteredFonts.randomElement()!
         selectedFont = randomFont
     }
     
@@ -266,20 +289,61 @@ class WallpaperGeneratorViewModel: ObservableObject {
     private func randomizeBackground() {
         let compositionManager = WallpaperCompositionManager.shared
         
-        // Only select from available background images
-        if let randomImage = compositionManager.availableBackgrounds.randomElement() {
-            compositionManager.selectBackground(named: randomImage)
+        // Get counts from both sources
+        let galleryCount = compositionManager.availableBackgrounds.count
+        let uploadedCount = compositionManager.userUploadedBackgrounds.count
+        let totalCount = galleryCount + uploadedCount
+        
+        // If no backgrounds available, fallback to a random solid color
+        guard totalCount > 0 else {
+            let colors: [Color] = [.blue, .purple, .pink, .orange, .green, .red]
+            compositionManager.backgroundType = .solidColor(colors.randomElement() ?? .blue)
+            return
+        }
+        
+        // Generate a random index from 0 to totalCount - 1
+        // This ensures each background has equal probability of being selected
+        let randomIndex = Int.random(in: 0..<totalCount)
+        
+        // If randomIndex is within gallery range, select from gallery
+        // Otherwise, select from uploaded backgrounds
+        if randomIndex < galleryCount {
+            // Select from gallery backgrounds
+            let selectedBackground = compositionManager.availableBackgrounds[randomIndex]
+            compositionManager.selectBackground(named: selectedBackground)
+        } else {
+            // Select from uploaded backgrounds
+            let uploadedIndex = randomIndex - galleryCount
+            let selectedImage = compositionManager.userUploadedBackgrounds[uploadedIndex]
+            compositionManager.selectUploadedBackground(selectedImage)
         }
     }
     
     init() {
         print("⚙️ Starting ViewModel initialization")
+        
+        // Initialize all stored properties first
         self.selectedDevice = DeviceConfig.iPhone12ProMax
+        // Initialize selectedFont with a temporary value to satisfy Swift's initialization requirements
+        // We'll update it after availableFonts is populated
         self.selectedFont = FontDisplayInfo(fontName: "System Font", displayName: "系统字体")
         
         print("🚀 Initializing WallpaperGeneratorViewModel")
         fontManager.registerFonts()
-        updateAvailableFonts()
+        
+        // Now we can safely call methods since all stored properties are initialized
+        // Update available fonts (this accesses availableFonts which is already initialized to [])
+        availableFonts = fontManager.getAllAvailableFonts()
+        print("📚 Found \(availableFonts.count) fonts")
+        
+        // Set default font to first available font (since System Font is removed)
+        if let firstFont = availableFonts.first {
+            self.selectedFont = firstFont
+            print("✅ Set default font to: \(firstFont.displayName)")
+        } else {
+            // Fallback if no fonts available (shouldn't happen)
+            print("⚠️ No fonts available, using fallback")
+        }
         
         createRequiredDirectories()
         print("✅ ViewModel initialization complete")
@@ -480,6 +544,83 @@ class WallpaperGeneratorViewModel: ObservableObject {
     func showSuccess(message: String) {
         errorMessage = message  // Using errorMessage for both error and success
         showError = true        // Using showError as a general alert flag
+    }
+
+    // Add these properties to your existing WallpaperGeneratorViewModel class
+    @Published var splitParagraphs: [String] = []
+    @Published var showingTextSplitterSheet = false
+    @Published var showingParagraphBrowser = false
+
+    // Add these methods to your existing WallpaperGeneratorViewModel class
+    func setSplitParagraphs(_ paragraphs: [String]) {
+        splitParagraphs = paragraphs
+        
+        // Simply store the paragraphs but don't auto-load anything
+        // Don't trigger any automatic generation
+        // Don't jump tabs
+        
+        // Just close the sheet
+        showingTextSplitterSheet = false
+    }
+
+    func useFirstParagraph() {
+        if let firstParagraph = splitParagraphs.first, !firstParagraph.isEmpty {
+            inputText = firstParagraph
+            // Generate the wallpaper but don't switch tabs
+            Task {
+                await generateWallpaper()
+            }
+        }
+    }
+
+    func useNextParagraph() {
+        guard let currentIndex = currentParagraphIndex(),
+              currentIndex < splitParagraphs.count - 1 else { return }
+        
+        // Set the input text to the next paragraph
+        inputText = splitParagraphs[currentIndex + 1]
+        
+        // Generate the wallpaper with the new text
+        Task {
+            await generateWallpaper()
+        }
+    }
+
+    func browseAllParagraphs() {
+        if !splitParagraphs.isEmpty {
+            showingParagraphBrowser = true
+        }
+    }
+
+    // Add these helper methods for paragraph navigation
+    func currentParagraphIndex() -> Int? {
+        return splitParagraphs.firstIndex(of: inputText)
+    }
+
+    func hasPreviousParagraph() -> Bool {
+        guard let currentIndex = currentParagraphIndex() else { return false }
+        return currentIndex > 0
+    }
+
+    func hasNextParagraph() -> Bool {
+        guard let currentIndex = currentParagraphIndex() else { return false }
+        return currentIndex < splitParagraphs.count - 1
+    }
+
+    // Add this method to handle paragraph operations without locking tab navigation
+    func handleSplitParagraphs() {
+        // Allow processing paragraphs without restricting navigation
+        if !splitParagraphs.isEmpty {
+            // Use the first paragraph if available
+            if let firstParagraph = splitParagraphs.first, !firstParagraph.isEmpty {
+                inputText = firstParagraph
+                Task {
+                    await generateWallpaper()
+                    // Suggest switching to preview but don't force it
+                    NotificationCenter.default.post(name: .suggestPreviewTab, object: nil)
+                }
+            }
+        }
     }
 } 
 
