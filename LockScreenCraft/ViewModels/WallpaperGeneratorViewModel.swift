@@ -38,7 +38,12 @@ class WallpaperGeneratorViewModel: ObservableObject {
     // MARK: - Text Styling Properties
     private let maxFontSize: Double = 600.0  // Maximum font size limit
     private let minFontSize: Double = 3.0    // Minimum font size limit
-    @Published var fontSize: Double = 100.0   // Default font size
+    @Published var fontSize: Double = 100.0 {   // Default font size
+        didSet {
+            // Trigger fast wallpaper update when fontSize changes (shorter debounce for slider responsiveness)
+            updateWallpaperFast()
+        }
+    }
     @Published var textAlignment: NSTextAlignment = .center
     @Published var isLoadingFonts: Bool = false
     @Published var lineSpacing: Double = -20.0 {  // Default line spacing
@@ -138,7 +143,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
             showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
         } else {
             fontSize = size.rounded()
-            updateWallpaperWithDebounce()
+            // Note: didSet on fontSize will trigger update automatically
         }
     }
     
@@ -146,7 +151,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
         if fontSize < maxFontSize {
             fontSize += 1.0
             fontSizeText = String(Int(fontSize))
-            updateWallpaperWithDebounce()
+            // Note: didSet on fontSize will trigger update automatically
         } else {
             showError(message: "Font size cannot exceed \(Int(maxFontSize))")
         }
@@ -156,7 +161,7 @@ class WallpaperGeneratorViewModel: ObservableObject {
         if fontSize > minFontSize {
             fontSize -= 1.0
             fontSizeText = String(Int(fontSize))
-            updateWallpaperWithDebounce()
+            // Note: didSet on fontSize will trigger update automatically
         } else {
             showError(message: "Font size cannot be smaller than \(Int(minFontSize))")
         }
@@ -175,13 +180,18 @@ class WallpaperGeneratorViewModel: ObservableObject {
     }
     
     // MARK: - Wallpaper Generation
-    private func updateWallpaperWithDebounce() {
+    private func updateWallpaperWithDebounce(delay: TimeInterval = 0.5) {
         fontDebounceTimer?.invalidate()
-        fontDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+        fontDebounceTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.generateWallpaper()
             }
         }
+    }
+    
+    // Fast update for slider dragging (shorter debounce for better responsiveness)
+    private func updateWallpaperFast() {
+        updateWallpaperWithDebounce(delay: 0.1)
     }
     
     func generateWallpaper() async {
@@ -266,9 +276,33 @@ class WallpaperGeneratorViewModel: ObservableObject {
     private func randomizeBackground() {
         let compositionManager = WallpaperCompositionManager.shared
         
-        // Only select from available background images
-        if let randomImage = compositionManager.availableBackgrounds.randomElement() {
-            compositionManager.selectBackground(named: randomImage)
+        // Get counts from both sources
+        let galleryCount = compositionManager.availableBackgrounds.count
+        let uploadedCount = compositionManager.userUploadedBackgrounds.count
+        let totalCount = galleryCount + uploadedCount
+        
+        // If no backgrounds available, fallback to a random solid color
+        guard totalCount > 0 else {
+            let colors: [Color] = [.blue, .purple, .pink, .orange, .green, .red]
+            compositionManager.backgroundType = .solidColor(colors.randomElement() ?? .blue)
+            return
+        }
+        
+        // Generate a random index from 0 to totalCount - 1
+        // This ensures each background has equal probability of being selected
+        let randomIndex = Int.random(in: 0..<totalCount)
+        
+        // If randomIndex is within gallery range, select from gallery
+        // Otherwise, select from uploaded backgrounds
+        if randomIndex < galleryCount {
+            // Select from gallery backgrounds
+            let selectedBackground = compositionManager.availableBackgrounds[randomIndex]
+            compositionManager.selectBackground(named: selectedBackground)
+        } else {
+            // Select from uploaded backgrounds
+            let uploadedIndex = randomIndex - galleryCount
+            let selectedImage = compositionManager.userUploadedBackgrounds[uploadedIndex]
+            compositionManager.selectUploadedBackground(selectedImage)
         }
     }
     

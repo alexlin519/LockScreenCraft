@@ -120,18 +120,18 @@ struct PreviewTabView: View {
                 
                 Spacer(minLength: 50) // Space for tab bar
             }
-        }
-        .navigationTitle("Preview".localized)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                if let currentFile = viewModel.currentProcessingFile {
-                    Text("\(currentFile) (\(viewModel.currentFileIndex + 1)/\(viewModel.availableTextFiles.count))")
-                        .foregroundStyle(.secondary)
-                }
             }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if viewModel.generatedImage != nil {
+            .navigationTitle("Preview".localized)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if let currentFile = viewModel.currentProcessingFile {
+                        Text("\(currentFile) (\(viewModel.currentFileIndex + 1)/\(viewModel.availableTextFiles.count))")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if viewModel.generatedImage != nil {
                     SaveButton(viewModel: viewModel)
                 }
             }
@@ -458,46 +458,48 @@ struct WallpaperGeneratorView: View {
                 } else if selectedTab == 1 {
                     // PREVIEW TAB
                     NavigationView {
-                        VStack {
-                            if viewModel.generatedImage != nil {
-                                PreviewSection(
-                                    viewModel: viewModel,
-                                    isFullScreenPreview: $isFullScreenPreview,
-                                    thumbnailScale: $thumbnailScale
-                                )
-                                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
-                                .onTapGesture {
-                                    isFullScreenPreview = true
-                                }
-                                
-                                TextControlPanel(viewModel: viewModel)
-                                    .padding(.horizontal)
-                            } else {
-                                // Show a helpful message when no image exists
-                                VStack(spacing: 25) {
-                                    Image(systemName: "photo.badge.plus")
-                                        .font(.system(size: 60))
-                                        .foregroundColor(.secondary)
-                                        
-                                    Text("No Preview Available".localized)
-                                        .font(.title2)
-                                        .fontWeight(.medium)
-                                        
-                                    Text("Generate a wallpaper first by entering text in the Generate tab".localized)
-                                        .multilineTextAlignment(.center)
-                                        .foregroundColor(.secondary)
-                                        
-                                    Button("Go to Generate Tab".localized) {
-                                        selectedTab = 0
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                if viewModel.generatedImage != nil {
+                                    PreviewSection(
+                viewModel: viewModel,
+                isFullScreenPreview: $isFullScreenPreview,
+                thumbnailScale: $thumbnailScale
+            )
+                                    .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
+                                    .onTapGesture {
+                                        isFullScreenPreview = true
                                     }
-                                    .buttonStyle(.borderedProminent)
-                                    .padding(.top)
+                                    
+                                    TextControlPanel(viewModel: viewModel)
+                                        .padding(.horizontal)
+                                } else {
+                                    // Show a helpful message when no image exists
+                                    VStack(spacing: 25) {
+                                        Image(systemName: "photo.badge.plus")
+                                            .font(.system(size: 60))
+                                            .foregroundColor(.secondary)
+                                            
+                                        Text("No Preview Available".localized)
+                                            .font(.title2)
+                                            .fontWeight(.medium)
+                                            
+                                        Text("Generate a wallpaper first by entering text in the Generate tab".localized)
+                                            .multilineTextAlignment(.center)
+                                            .foregroundColor(.secondary)
+                                            
+                                        Button("Go to Generate Tab".localized) {
+                                            selectedTab = 0
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .padding(.top)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .frame(minHeight: UIScreen.main.bounds.height * 0.6)
                                 }
-                                .padding()
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
-                            
-                            Spacer(minLength: 100) // Important: Add extra space at bottom
+                            .padding(.bottom, 80) // Add padding for tab bar without creating huge spacer
                         }
                         .navigationTitle("Preview".localized)
                         .toolbar {
@@ -520,7 +522,7 @@ struct WallpaperGeneratorView: View {
                     }
                 } else {
                     // ADJUST TAB - Whatever this contains
-                    AdjustTabView(viewModel: viewModel)
+            AdjustTabView(viewModel: viewModel)
                 }
             }
             .padding(.bottom, 50) // Add padding to prevent content from covering the tab bar
@@ -679,27 +681,27 @@ struct ActionButtonsSection: View {
             
             // Put Process Text Files and Import from TXT in the same row
             HStack(spacing: 12) {
-                // Process Text Files button
-                Button {
-                    Task {
-                        await viewModel.startProcessingAllFiles()
-                    }
-                } label: {
+            // Process Text Files button
+            Button {
+                Task {
+                    await viewModel.startProcessingAllFiles()
+                }
+            } label: {
                     Label("Process Files".localized, systemImage: "doc.text.magnifyingglass")
-                        .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            
+            // Import from TXT button
+            Button {
+                Task {
+                    viewModel.showingFilePicker = true
                 }
-                .buttonStyle(.bordered)
-                
-                // Import from TXT button
-                Button {
-                    Task {
-                        viewModel.showingFilePicker = true
-                    }
-                } label: {
+            } label: {
                     Label("Import TXT".localized, systemImage: "doc.text")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
             }
             .padding(.horizontal)
             
@@ -945,48 +947,27 @@ struct TextStyleSection: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // Font Picker and Size Controls in one row
-            HStack(spacing: 12) {
-                // Font Picker
-                if !viewModel.availableFonts.isEmpty {
-                    Picker("Font".localized, selection: $viewModel.selectedFont) {
-                        ForEach(viewModel.availableFonts, id: \.fontName) { font in
-                            Text(font.displayName)
-                                .tag(font)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
+            // Font Size Control with Slider (like Line Space and Word Space)
+            // Slider range is limited for easier adjustment, but text input can still accept values outside this range
+            HStack {
+                Text("Size".localized)
+                Slider(value: $viewModel.fontSize, in: 120.0...300.0, step: 1)
+                    .frame(maxWidth: .infinity)
                 
-                // Add Randomize button here
-                Button(action: {
-                    viewModel.randomizeAll()
-                    Task {
-                        await viewModel.generateWallpaper()
-                    }
-                }) {
-                    Label("", systemImage: "dice.fill")
-                        .font(.footnote)
-                }
-                .buttonStyle(.bordered)
-                
-                // Font Size Controls
+                // Add number input with +/- buttons
                 HStack {
                     Button(action: { viewModel.decreaseFontSize() }) {
                         Image(systemName: "minus.circle.fill")
-                            .font(.title2)
+                            .font(.title3)
                     }
                     
-                    TextField("", text: Binding(
-                        get: { viewModel.fontSizeText },
-                        set: { viewModel.updateFontSizeText($0) }
-                    ))
-                        .multilineTextAlignment(.center)
-                        .frame(width: 50)
-                        
+                    Text("\(Int(viewModel.fontSize))")
+                        .frame(width: 40)
+                        .monospacedDigit()
+                    
                     Button(action: { viewModel.increaseFontSize() }) {
                         Image(systemName: "plus.circle.fill")
-                            .font(.title2)
+                            .font(.title3)
                     }
                 }
             }
@@ -996,7 +977,7 @@ struct TextStyleSection: View {
                 // Line Spacing
                 HStack {
                     Text("Line Space".localized)
-                    Slider(value: $viewModel.lineSpacing, in: -200...200, step: 1)
+                    Slider(value: $viewModel.lineSpacing, in: -90...30, step: 1)
                         .frame(maxWidth: .infinity)
                     
                     // Add number input with +/- buttons
@@ -1020,7 +1001,7 @@ struct TextStyleSection: View {
                 // Word Spacing
                 HStack {
                     Text("Word Space".localized)
-                    Slider(value: $viewModel.wordSpacing, in: -100...100, step: 1)
+                    Slider(value: $viewModel.wordSpacing, in: -50...40, step: 1)
                         .frame(maxWidth: .infinity)
                     
                     // Add number input with +/- buttons
@@ -1062,6 +1043,33 @@ struct TextStyleSection: View {
                     .padding(.horizontal, 4)
                 }
             }
+            
+            // Font Picker, Randomize Button, and Alignment Controls in one row
+            HStack(spacing: 12) {
+                // Font Picker
+                if !viewModel.availableFonts.isEmpty {
+                    Picker("Font".localized, selection: $viewModel.selectedFont) {
+                        ForEach(viewModel.availableFonts, id: \.fontName) { font in
+                            Text(font.displayName)
+                                .tag(font)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                
+                // Randomize button
+                Button(action: {
+                    viewModel.randomizeAll()
+                    Task {
+                        await viewModel.generateWallpaper()
+                    }
+                }) {
+                    Label("", systemImage: "dice.fill")
+                        .font(.footnote)
+                }
+                .buttonStyle(.bordered)
+                
+                Spacer()
                 
             // Text Alignment Controls
             HStack {
@@ -1069,6 +1077,7 @@ struct TextStyleSection: View {
                     Button(action: { viewModel.setTextAlignment(alignment) }) {
                         Image(systemName: alignmentIcon(for: alignment))
                             .foregroundColor(viewModel.textAlignment == alignment ? .accentColor : .primary)
+                        }
                     }
                 }
             }
