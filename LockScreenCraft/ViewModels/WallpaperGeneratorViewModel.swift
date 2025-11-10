@@ -308,12 +308,29 @@ class WallpaperGeneratorViewModel: ObservableObject {
     
     init() {
         print("⚙️ Starting ViewModel initialization")
+        
+        // Initialize all stored properties first
         self.selectedDevice = DeviceConfig.iPhone12ProMax
+        // Initialize selectedFont with a temporary value to satisfy Swift's initialization requirements
+        // We'll update it after availableFonts is populated
         self.selectedFont = FontDisplayInfo(fontName: "System Font", displayName: "系统字体")
         
         print("🚀 Initializing WallpaperGeneratorViewModel")
         fontManager.registerFonts()
-        updateAvailableFonts()
+        
+        // Now we can safely call methods since all stored properties are initialized
+        // Update available fonts (this accesses availableFonts which is already initialized to [])
+        availableFonts = fontManager.getAllAvailableFonts()
+        print("📚 Found \(availableFonts.count) fonts")
+        
+        // Set default font to first available font (since System Font is removed)
+        if let firstFont = availableFonts.first {
+            self.selectedFont = firstFont
+            print("✅ Set default font to: \(firstFont.displayName)")
+        } else {
+            // Fallback if no fonts available (shouldn't happen)
+            print("⚠️ No fonts available, using fallback")
+        }
         
         createRequiredDirectories()
         print("✅ ViewModel initialization complete")
