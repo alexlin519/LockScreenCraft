@@ -38,7 +38,6 @@ class FontManager {
     private let fontCategories: [String: FontCategory] = [
         // 1. 草书 行书 行楷
         "DuanNingRuanBiXingShu-2": .cursiveAndRunningScript,
-        "XiangNanXingShuTi-1": .cursiveAndRunningScript,
         "南构无恙行书": .cursiveAndRunningScript,
         "鸿雷行书简体": .cursiveAndRunningScript,
         "ZhiMangXing-Regular": .cursiveAndRunningScript,
@@ -128,7 +127,6 @@ class FontManager {
         
         // 行书字体 (Running Script / Xing Shu)
         "DuanNingRuanBiXingShu-2": "段宁软笔行书",
-        "XiangNanXingShuTi-1": "向南行书体",
         "南构无恙行书": "南构无恙行书",
         "鸿雷行书简体": "鸿雷行书",
         
@@ -339,7 +337,9 @@ class FontManager {
             "YujiHentaiganaAkebono-Regular",
             "YujiSyuku-Regular",
             // Exclude daizen (not in new classification)
-            "daizen"
+            "daizen",
+            // Exclude 向南行书体 (XiangNanXingShuTi-1)
+            "XiangNanXingShuTi-1"
         ]
         
         // Add custom fonts from our registered fonts
@@ -388,5 +388,20 @@ class FontManager {
         print("=== 🔍 DEBUG: Font List End ===\n")
         
         return sortedFonts
+    }
+    
+    // Get fonts by category (nil means all fonts)
+    func getFonts(byCategory category: FontCategory?) -> [FontDisplayInfo] {
+        let allFonts = getAllAvailableFonts()
+        
+        // If no category specified, return all fonts
+        guard let category = category else {
+            return allFonts
+        }
+        
+        // Filter fonts by category
+        return allFonts.filter { font in
+            fontCategories[font.fontName] == category
+        }
     }
 } 

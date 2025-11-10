@@ -27,6 +27,12 @@
 "Alignment" = "对齐";
 "Line Spacing" = "行间距";
 "Word Spacing" = "字间距";
+"All Styles" = "全部风格";
+"Regular Kai Script" = "端正楷书";
+"Cursive and Running Script" = "行草";
+"Handwritten" = "手写体";
+"Other" = "其他";
+"Font Style Filter" = "字体风格筛选";
 "Enter text..." = "输入文本...";
 "Select Device" = "选择设备";
 "Text Color" = "文本颜色";

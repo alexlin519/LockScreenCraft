@@ -1044,43 +1044,58 @@ struct TextStyleSection: View {
                 }
             }
             
-            // Font Picker, Randomize Button, and Alignment Controls in one row
-            HStack(spacing: 12) {
-                // Font Picker
-                if !viewModel.availableFonts.isEmpty {
-                    Picker("Font".localized, selection: $viewModel.selectedFont) {
-                        ForEach(viewModel.availableFonts, id: \.fontName) { font in
-                            Text(font.displayName)
-                                .tag(font)
+            // Font Picker, Randomize Button, Category Filter, and Alignment Controls in one row
+            // Optimized layout: random button moved left, style filter has space for 4 Chinese characters
+            GeometryReader { geometry in
+                HStack(spacing: 6) {
+                    // Font Picker - 40% width, shifted left
+                    if !viewModel.availableFonts.isEmpty {
+                        Picker("Font".localized, selection: $viewModel.selectedFont) {
+                            ForEach(viewModel.availableFonts, id: \.fontName) { font in
+                                Text(font.displayName)
+                                    .tag(font)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(width: geometry.size.width * 0.40)
+                    }
+                    
+                    // Randomize button - fixed small width, moved left with minimal spacing
+                    Button(action: {
+                        viewModel.randomizeAll()
+                        Task {
+                            await viewModel.generateWallpaper()
+                        }
+                    }) {
+                        Label("", systemImage: "dice.fill")
+                            .font(.footnote)
+                    }
+                    .buttonStyle(.bordered)
+                    .frame(width: 32, height: 32) // Fixed compact size
+                    
+                    // Font Category Filter - 30% width with minimum width for 4 Chinese characters (约100px)
+                    FontCategoryFilterPicker(selectedCategory: $viewModel.randomFontCategoryFilter)
+                        .frame(width: max(geometry.size.width * 0.30, 100))
+                    
+                    // Spacer to push alignment buttons to the right
+                    Spacer(minLength: 8)
+                    
+                    // Text Alignment Controls - fixed compact width on the right
+                    HStack(spacing: 6) {
+                        ForEach([NSTextAlignment.left, .center, .right], id: \.self) { alignment in
+                            Button(action: { viewModel.setTextAlignment(alignment) }) {
+                                Image(systemName: alignmentIcon(for: alignment))
+                                    .font(.system(size: 14))
+                                    .foregroundColor(viewModel.textAlignment == alignment ? .accentColor : .primary)
+                                    .frame(width: 28, height: 28)
+                            }
                         }
                     }
-                    .pickerStyle(.menu)
+                    .frame(width: min(geometry.size.width * 0.16, 100))
                 }
-                
-                // Randomize button
-                Button(action: {
-                    viewModel.randomizeAll()
-                    Task {
-                        await viewModel.generateWallpaper()
-                    }
-                }) {
-                    Label("", systemImage: "dice.fill")
-                        .font(.footnote)
-                }
-                .buttonStyle(.bordered)
-                
-                Spacer()
-                
-            // Text Alignment Controls
-            HStack {
-                ForEach([NSTextAlignment.left, .center, .right], id: \.self) { alignment in
-                    Button(action: { viewModel.setTextAlignment(alignment) }) {
-                        Image(systemName: alignmentIcon(for: alignment))
-                            .foregroundColor(viewModel.textAlignment == alignment ? .accentColor : .primary)
-                        }
-                    }
-                }
+                .padding(.horizontal, 4) // Small horizontal padding
             }
+            .frame(height: 44) // Fixed height for the row
         }
     }
     
@@ -1091,6 +1106,75 @@ struct TextStyleSection: View {
         case .right: return "text.alignright"
         default: return "text.alignleft"
         }
+    }
+}
+
+// MARK: - Font Category Filter Picker
+struct FontCategoryFilterPicker: View {
+    @Binding var selectedCategory: FontCategory?
+    
+    // Wrapper enum for Picker to handle optional FontCategory
+    enum CategoryOption: String, CaseIterable {
+        case all = "全部风格"
+        case regularKaiScript = "端正楷书"
+        case cursiveAndRunningScript = "行草"
+        case handwritten = "手写体"
+        case other = "其他"
+        
+        var displayName: String {
+            switch self {
+            case .all: return "All Styles".localized
+            case .regularKaiScript: return "Regular Kai Script".localized
+            case .cursiveAndRunningScript: return "Cursive and Running Script".localized
+            case .handwritten: return "Handwritten".localized
+            case .other: return "Other".localized
+            }
+        }
+        
+        var fontCategory: FontCategory? {
+            switch self {
+            case .all: return nil
+            case .regularKaiScript: return .regularKaiScript
+            case .cursiveAndRunningScript: return .cursiveAndRunningScript
+            case .handwritten: return .handwritten
+            case .other: return .other
+            }
+        }
+        
+        init?(from category: FontCategory?) {
+            if let category = category {
+                switch category {
+                case .regularKaiScript: self = .regularKaiScript
+                case .cursiveAndRunningScript: self = .cursiveAndRunningScript
+                case .handwritten: self = .handwritten
+                case .other: self = .other
+                }
+            } else {
+                self = .all
+            }
+        }
+    }
+    
+    private var selectedOption: Binding<CategoryOption> {
+        Binding(
+            get: {
+                CategoryOption(from: selectedCategory) ?? .all
+            },
+            set: { newValue in
+                selectedCategory = newValue.fontCategory
+            }
+        )
+    }
+    
+    var body: some View {
+        Picker("Font Style Filter".localized, selection: selectedOption) {
+            ForEach(CategoryOption.allCases, id: \.self) { option in
+                Text(option.displayName)
+                    .tag(option)
+            }
+        }
+        .pickerStyle(.menu)
+        .frame(minWidth: 80) // Minimum width to display 4 Chinese characters
     }
 }
 

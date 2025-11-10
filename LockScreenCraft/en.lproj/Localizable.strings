@@ -27,6 +27,12 @@
 "Alignment" = "Alignment";
 "Line Spacing" = "Line Spacing";
 "Word Spacing" = "Word Spacing";
+"All Styles" = "All Styles";
+"Regular Kai Script" = "Regular Kai Script";
+"Cursive and Running Script" = "Cursive and Running Script";
+"Handwritten" = "Handwritten";
+"Other" = "Other";
+"Font Style Filter" = "Font Style Filter";
 "Enter text..." = "Enter text...";
 "Select Device" = "Select Device";
 "Text Color" = "Text Color";

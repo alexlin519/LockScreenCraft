@@ -97,6 +97,9 @@ class WallpaperGeneratorViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Font Category Filter for Randomization
+    @Published var randomFontCategoryFilter: FontCategory? = nil // nil means "全部风格" (All Styles)
+    
     // MARK: - Font Size Methods
     private var fontSizeDebounceTimer: Timer?
     @Published private(set) var fontSizeText: String = "300" {
@@ -259,8 +262,18 @@ class WallpaperGeneratorViewModel: ObservableObject {
     }
     
     private func randomizeFont() {
-        guard !availableFonts.isEmpty else { return }
-        let randomFont = availableFonts.randomElement()!
+        // Get fonts filtered by selected category (nil means all fonts)
+        let filteredFonts = fontManager.getFonts(byCategory: randomFontCategoryFilter)
+        
+        guard !filteredFonts.isEmpty else {
+            // If no fonts in selected category, fallback to all fonts
+            guard !availableFonts.isEmpty else { return }
+            let randomFont = availableFonts.randomElement()!
+            selectedFont = randomFont
+            return
+        }
+        
+        let randomFont = filteredFonts.randomElement()!
         selectedFont = randomFont
     }
     
